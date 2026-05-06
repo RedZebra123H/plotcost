@@ -4,969 +4,707 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>plotcost - Estimate Land Development Costs in Minutes</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="plotcost.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --green-dark: #15803d;
-            --green-mid: #22c55e;
-            --green-light: #4ade80;
-            --green-50: #f0fdf4;
-            --green-100: #dcfce7;
-            --green-600: #16a34a;
-            --green-700: #15803d;
-            --charcoal: #111827;
-            --gray-mid: #6b7280;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            --cream: #fefce8;
-            --amber-50: #fffbeb;
-            --amber-500: #f59e0b;
-            --amber-800: #92400e;
-            --red-50: #fef2f2;
-            --red-500: #ef4444;
-            --red-700: #b91c1c;
-            --white: #ffffff;
-        }
-
-        body { font-family: 'DM Sans', sans-serif; color: var(--charcoal); line-height: 1.5; background: var(--white); }
-
-        /* NAV */
-        .nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--gray-200); padding: 1rem 0; }
-        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; }
-        .nav-logo { font-size: 1.4rem; font-weight: 700; color: var(--green-dark); text-decoration: none; cursor: pointer; }
-        .nav-links { display: flex; align-items: center; gap: 2rem; }
-        .nav-links a { color: var(--gray-mid); text-decoration: none; font-weight: 500; transition: color 0.15s; cursor: pointer; }
-        .nav-links a:hover { color: var(--green-dark); }
-        .nav-cta { background: var(--green-dark); color: white !important; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; transition: background 0.15s; }
-        .nav-cta:hover { background: #166534 !important; }
-        .nav-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--charcoal); }
-
-        /* HERO */
-        .hero { background: linear-gradient(135deg, #052e16 0%, #14532d 50%, #15803d 100%); padding: 5rem 1.5rem; text-align: center; position: relative; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-        .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
-        .hero h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); font-weight: 700; color: white; margin-bottom: 1.25rem; line-height: 1.15; }
-        .hero p { font-size: 1.15rem; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.6; }
-        .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .hero-badge { display: inline-block; margin-top: 2rem; padding: 0.4rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; color: rgba(255,255,255,0.7); font-size: 0.85rem; }
-
-        /* BUTTONS */
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.85rem 2rem; font-size: 1.05rem; font-weight: 600; font-family: inherit; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-decoration: none; }
-        .btn-hero { background: var(--green-light); color: #052e16; padding: 1rem 2.5rem; font-size: 1.1rem; box-shadow: 0 4px 14px rgba(74,222,128,0.3); }
-        .btn-hero:hover { background: #86efac; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(74,222,128,0.4); }
-        .btn-outline { background: transparent; color: white; border: 2px solid rgba(255,255,255,0.3); padding: 1rem 2.5rem; font-size: 1.1rem; }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
-
-        /* SECTIONS */
-        .section-container { max-width: 1100px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 4rem; }
-        .section-header h2 { font-size: 2rem; font-weight: 700; color: var(--charcoal); margin-bottom: 0.75rem; }
-        .section-divider { width: 5rem; height: 4px; background: var(--green-light); margin: 0 auto; border-radius: 2px; }
-
-        .how-it-works { padding: 5rem 1.5rem; background: var(--cream); }
-        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2.5rem; }
-        .step-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .step-icon { width: 4rem; height: 4rem; border-radius: 50%; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; position: relative; font-size: 1.5rem; transition: transform 0.3s; }
-        .step-card:hover .step-icon { transform: translateY(-4px); }
-        .step-number { position: absolute; top: -0.5rem; right: -0.5rem; width: 1.5rem; height: 1.5rem; background: var(--green-light); color: white; font-size: 0.7rem; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--cream); }
-        .step-card h3 { font-size: 1.2rem; font-weight: 700; color: var(--charcoal); margin-bottom: 0.5rem; }
-        .step-card p { color: var(--gray-mid); font-size: 0.95rem; line-height: 1.6; max-width: 300px; }
-
-        .trust-section { padding: 5rem 1.5rem; background: white; }
-        .trust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; max-width: 900px; margin: 0 auto; }
-        .trust-card { text-align: center; }
-        .trust-emoji { font-size: 2.5rem; margin-bottom: 1rem; }
-        .trust-card h3 { font-size: 1.15rem; font-weight: 700; color: var(--charcoal); margin-bottom: 0.5rem; }
-        .trust-card p { color: var(--gray-mid); font-size: 0.9rem; line-height: 1.6; }
-
-        .examples-section { padding: 5rem 1.5rem; background: var(--gray-50); }
-        .examples-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
-        .example-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #f3f4f6; box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
-        .example-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .example-card img { width: 100%; height: 180px; object-fit: cover; }
-        .example-card-body { padding: 1.25rem; }
-        .example-card h3 { font-size: 1.05rem; font-weight: 600; color: var(--charcoal); margin-bottom: 0.3rem; }
-        .example-card .specs { font-size: 0.85rem; color: var(--gray-mid); margin-bottom: 0.5rem; }
-        .example-card .range { font-size: 1rem; font-weight: 700; color: var(--green-dark); }
-        .example-disclaimer { text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: #9ca3af; }
-
-        .faq-section { padding: 5rem 1.5rem; background: white; }
-        .faq-list { max-width: 700px; margin: 0 auto; }
-        .faq-item { border-bottom: 1px solid var(--gray-200); }
-        .faq-question { width: 100%; background: none; border: none; text-align: left; padding: 1.25rem 0; font-size: 1.05rem; font-weight: 500; font-family: inherit; color: var(--charcoal); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-        .faq-question:hover { color: var(--green-dark); }
-        .faq-question .chevron { transition: transform 0.2s; font-size: 0.85rem; color: var(--gray-mid); }
-        .faq-item.open .faq-question .chevron { transform: rotate(180deg); }
-        .faq-answer { display: none; padding-bottom: 1.25rem; color: var(--gray-mid); font-size: 0.95rem; line-height: 1.6; }
-        .faq-item.open .faq-answer { display: block; }
-
-        .cta-section { padding: 5rem 1.5rem; background: linear-gradient(135deg, #052e16 0%, #14532d 100%); text-align: center; }
-        .cta-section h2 { font-size: 2rem; font-weight: 700; color: white; margin-bottom: 1rem; }
-        .cta-section p { color: rgba(255,255,255,0.75); font-size: 1.05rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
-
-        .footer { padding: 2rem 1.5rem; background: var(--charcoal); text-align: center; }
-        .footer p { color: #9ca3af; font-size: 0.8rem; }
-        .footer .disclaimer-text { max-width: 600px; margin: 0 auto 1rem; font-size: 0.75rem; color: #6b7280; line-height: 1.5; }
-
-        /* CALCULATOR */
-        .calculator-page { display: none; min-height: 100vh; background: var(--gray-50); }
-        .calculator-page.active { display: block; }
-        .landing-page.hidden { display: none; }
-
-        .calc-container { max-width: 640px; margin: 0 auto; padding: 2rem 1rem; }
-        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--gray-500); text-decoration: none; font-size: 0.9rem; font-weight: 500; margin-bottom: 1.5rem; cursor: pointer; transition: color 0.15s; }
-        .back-link:hover { color: var(--green-dark); }
-
-        /* Progress bar */
-        .progress-bar { display: flex; align-items: center; margin-bottom: 2rem; gap: 0.25rem; }
-        .progress-step { flex: 1; height: 4px; border-radius: 2px; background: var(--gray-200); transition: background 0.3s; }
-        .progress-step.active { background: var(--green-mid); }
-        .progress-step.completed { background: var(--green-dark); }
-
-        .step-label { text-align: center; font-size: 0.8rem; color: var(--gray-400); margin-bottom: 0.5rem; font-weight: 500; }
-
-        .card { background: white; border-radius: 12px; border: 1px solid var(--gray-200); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--gray-900); }
-        .card-subtitle { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1.25rem; }
-
-        .form-group { margin-bottom: 1.25rem; }
-        .calc-container label { display: block; font-weight: 500; font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.4rem; }
-        .calc-container input[type="number"], .calc-container input[type="text"] { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 1.1rem; font-family: inherit; transition: border-color 0.15s; outline: none; }
-        .calc-container input:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(34,197,94,0.1); }
-        .input-hint { font-size: 0.8rem; color: var(--gray-400); margin-top: 0.4rem; }
-        .input-large { font-size: 2rem !important; text-align: center; font-weight: 700; }
-        .input-dollar { position: relative; }
-        .input-dollar::before { content: '$'; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; font-weight: 600; color: var(--gray-400); pointer-events: none; }
-        .input-dollar input { padding-left: 2rem; }
-
-        .grid-select { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.6rem; }
-        .grid-select-item { padding: 0.75rem 1rem; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer; transition: all 0.15s; background: white; }
-        .grid-select-item:hover { border-color: var(--green-mid); background: var(--green-50); }
-        .grid-select-item.selected { border-color: var(--green-600); background: var(--green-50); box-shadow: 0 0 0 3px rgba(22,163,74,0.1); }
-        .grid-select-item .icon { font-size: 1.3rem; margin-bottom: 0.25rem; }
-        .grid-select-item .name { font-weight: 600; font-size: 0.85rem; color: var(--gray-800); }
-        .grid-select-item .desc { font-size: 0.72rem; color: var(--gray-500); margin-top: 0.15rem; line-height: 1.4; }
-
-        .btn-calc { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.5rem; font-size: 0.95rem; font-weight: 600; font-family: inherit; border: none; border-radius: 8px; cursor: pointer; transition: all 0.15s; width: 100%; }
-        .btn-calc-primary { background: var(--green-600); color: white; }
-        .btn-calc-primary:hover:not(:disabled) { background: var(--green-700); }
-        .btn-calc-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-calc-secondary { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
-        .btn-calc-secondary:hover { background: var(--gray-200); }
-        .btn-calc-back { background: none; color: var(--gray-500); border: none; padding: 0.8rem 1rem; }
-        .btn-calc-back:hover { color: var(--gray-700); }
-        .btn-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-        .btn-row .btn-calc { flex: 1; }
-
-        .skip-link { display: block; text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-500); cursor: pointer; text-decoration: none; }
-        .skip-link:hover { color: var(--green-dark); }
-
-        .warning-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--amber-800); margin-top: 0.75rem; }
-
-        /* Results */
-        .results-header { text-align: center; margin-bottom: 1.5rem; }
-        .results-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); }
-        .results-header .project-label { font-size: 0.9rem; color: var(--gray-500); margin-top: 0.25rem; }
-
-        .estimate-range { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.75rem; background: var(--green-50); border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--green-100); }
-        .estimate-value { font-size: 2rem; font-weight: 700; color: var(--green-700); }
-        .estimate-separator { font-size: 1.25rem; color: var(--gray-400); }
-
-        .confidence-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-        .confidence-high { background: var(--green-100); color: var(--green-700); }
-        .confidence-medium { background: var(--amber-50); color: var(--amber-800); }
-        .confidence-low { background: var(--red-50); color: var(--red-700); }
-
-        .breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        .breakdown-table tr { border-bottom: 1px solid var(--gray-100); }
-        .breakdown-table tr:last-child { border-bottom: none; }
-        .breakdown-table td { padding: 0.7rem 0; }
-        .breakdown-table td:first-child { color: var(--gray-600); }
-        .breakdown-table td:nth-child(2), .breakdown-table td:nth-child(3) { text-align: right; font-weight: 500; color: var(--gray-800); }
-        .breakdown-table .total-row td { font-weight: 700; font-size: 0.95rem; padding-top: 0.8rem; border-top: 2px solid var(--gray-200); color: var(--green-dark); }
-
-        .budget-result { padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
-        .budget-good { background: var(--green-50); border: 1px solid var(--green-100); color: var(--green-700); }
-        .budget-tight { background: #fffbeb; border: 1px solid #fde68a; color: var(--amber-800); }
-        .budget-low { background: var(--red-50); border: 1px solid #fecaca; color: var(--red-700); }
-
-        .drivers-list { list-style: none; padding: 0; }
-        .drivers-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--gray-100); }
-        .drivers-list li:last-child { border-bottom: none; }
-        .driver-label { font-weight: 600; font-size: 0.85rem; color: var(--gray-800); }
-        .driver-pct { font-size: 0.75rem; color: var(--gray-400); margin-left: 0.4rem; }
-        .driver-desc { font-size: 0.8rem; color: var(--gray-500); margin-top: 0.15rem; }
-
-        .tips-list { list-style: none; padding: 0; }
-        .tips-list li { position: relative; padding: 0.5rem 0 0.5rem 1.2rem; font-size: 0.85rem; color: var(--gray-600); line-height: 1.5; }
-        .tips-list li::before { content: "\2022"; position: absolute; left: 0; color: var(--green-mid); font-weight: bold; }
-
-        .disclaimer-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
-        .disclaimer-box h4 { font-size: 0.85rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.4rem; }
-        .disclaimer-box p { font-size: 0.78rem; color: var(--gray-500); line-height: 1.5; }
-
-        .pdf-btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.85rem; background: var(--charcoal); color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; margin-top: 1rem; }
-        .pdf-btn:hover { background: #374151; }
-        .pdf-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .pdf-btn svg { width: 18px; height: 18px; }
-
-        .hidden { display: none !important; }
-
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .nav-toggle { display: block; }
-            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: white; padding: 1.5rem; border-bottom: 1px solid var(--gray-200); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-            .hero { padding: 3.5rem 1.5rem; }
-            .hero h1 { font-size: 2rem; }
-            .hero-buttons { flex-direction: column; align-items: center; }
-            .steps-grid { grid-template-columns: 1fr; gap: 2rem; }
-            .examples-grid { grid-template-columns: 1fr; }
-            .grid-select { grid-template-columns: 1fr 1fr; }
-            .estimate-range { flex-direction: column; gap: 0.25rem; }
-            .estimate-value { font-size: 1.5rem; }
-        }
-
-        @media (max-width: 480px) {
-            .grid-select { grid-template-columns: 1fr; }
-        }
+        .page-hidden { display: none !important; }
+        .page-visible { display: block; }
+        [data-step].hidden { display: none !important; }
+        .driver-expanded .driver-explanation { display: block; }
+        .driver-explanation { display: none; }
+        .faq-open .faq-answer { display: block !important; }
+        .faq-answer { display: none; }
+        .faq-open .chevron-icon { transform: rotate(180deg); }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col bg-background" style="font-family: 'DM Sans', sans-serif;">
 
 <!-- ==================== LANDING PAGE ==================== -->
-<div class="landing-page" id="landing-page">
-    <nav class="nav">
-        <div class="nav-container">
-            <a class="nav-logo" onclick="showLanding()">plotcost</a>
-            <button class="nav-toggle" onclick="document.querySelector('#landing-page .nav-links').classList.toggle('open')">&#9776;</button>
-            <div class="nav-links">
-                <a href="#how-it-works">How It Works</a>
-                <a href="#example-projects">Example Projects</a>
-                <a href="#faq">FAQ</a>
-                <a class="nav-cta" onclick="showCalculator()">Open Calculator</a>
+<div id="landing-page" class="page-visible">
+
+    <!-- Nav -->
+    <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-transparent py-5">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between">
+                <a onclick="showLanding()" class="text-2xl font-bold text-green-dark cursor-pointer">plotcost</a>
+                <div class="hidden md:flex items-center gap-8">
+                    <button onclick="scrollToSection('#how-it-works')" class="text-gray-600 hover:text-green-dark font-medium transition">How It Works</button>
+                    <button onclick="scrollToSection('#example-projects')" class="text-gray-600 hover:text-green-dark font-medium transition">Example Projects</button>
+                    <button onclick="showCalculator()" class="bg-green-dark hover:bg-green-mid text-white px-6 py-2.5 rounded-lg font-semibold transition">Get My Estimate</button>
+                </div>
+                <button class="md:hidden text-charcoal" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-3">
+                <button onclick="scrollToSection('#how-it-works')" class="text-left text-lg font-medium text-gray-800 py-2 block w-full">How It Works</button>
+                <button onclick="scrollToSection('#example-projects')" class="text-left text-lg font-medium text-gray-800 py-2 block w-full">Example Projects</button>
+                <button onclick="showCalculator()" class="w-full bg-green-dark text-white px-6 py-3 rounded-lg font-semibold mt-2">Get My Estimate</button>
             </div>
         </div>
     </nav>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Estimate Land Development Costs in Minutes</h1>
-            <p>Enter your acreage, terrain, and project scope — get an instant planning range. Built for landowners, developers, and contractors. Not a contractor quote — a smart starting point.</p>
-            <div class="hero-buttons">
-                <a class="btn btn-hero" onclick="showCalculator()">Get Started</a>
-                <a href="#how-it-works" class="btn btn-outline">See How It Works</a>
-            </div>
-            <div class="hero-badge">Free to use — no account required</div>
+    <!-- Hero -->
+    <section class="relative overflow-hidden py-32 md:py-40">
+        <div class="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat" style="background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80')">
+            <div class="absolute inset-0" style="background-color: rgba(28,28,28,0.58)"></div>
         </div>
-    </section>
-
-    <section class="how-it-works" id="how-it-works">
-        <div class="section-container">
-            <div class="section-header">
-                <h2>How It Works</h2>
-                <div class="section-divider"></div>
-            </div>
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-icon"><span>&#128203;</span><div class="step-number">1</div></div>
-                    <h3>Enter Your Land Details</h3>
-                    <p>Tell us about your property — acreage, terrain type, slope, and access difficulty.</p>
+        <div class="container relative z-10 mx-auto px-4 md:px-6 text-center">
+            <div class="max-w-4xl mx-auto flex flex-col items-center">
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-6 leading-tight">Estimate Land Development Costs in Minutes</h1>
+                <p class="text-xl md:text-2xl text-white/80 max-w-2xl mb-10 leading-relaxed">Enter your acreage, terrain, and project scope — get an instant planning range. Built for landowners, developers, and contractors. Not a contractor quote — a smart starting point.</p>
+                <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-8">
+                    <button onclick="showCalculator()" class="w-full sm:w-auto bg-green-dark hover:bg-green-mid text-white px-8 py-6 rounded-lg text-lg font-semibold transition">Get My Estimate</button>
+                    <button onclick="scrollToSection('#example-projects')" class="w-full sm:w-auto border-white text-white hover:bg-white/10 px-8 py-6 rounded-lg text-lg font-semibold transition bg-transparent" style="border: 2px solid rgba(255,255,255,0.5);">See Example Projects</button>
                 </div>
-                <div class="step-card">
-                    <div class="step-icon"><span>&#128200;</span><div class="step-number">2</div></div>
-                    <h3>Select Your Projects</h3>
-                    <p>Choose from clearing, grading, driveways, fencing, septic prep, and more.</p>
+                <div class="text-sm text-white/60 flex items-center justify-center">Free to use · No account required</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-12 md:py-20 bg-cream">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-charcoal mb-4">How It Works</h2>
+                <div class="w-20 h-1 bg-green-light mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-6 relative group-hover:-translate-y-2 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-green-light text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-cream">1</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-charcoal mb-3">Enter Your Land Details</h3>
+                    <p class="text-gray-mid leading-relaxed max-w-sm">Tell us about your property — acreage, region, terrain type, slope, and access difficulty.</p>
                 </div>
-                <div class="step-card">
-                    <div class="step-icon"><span>&#128176;</span><div class="step-number">3</div></div>
-                    <h3>Get Your Cost Range</h3>
-                    <p>Instantly receive a line-by-line planning estimate tailored to your specific conditions.</p>
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-6 relative group-hover:-translate-y-2 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-green-light text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-cream">2</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-charcoal mb-3">Select Your Projects</h3>
+                    <p class="text-gray-mid leading-relaxed max-w-sm">Choose from clearing, grading, driveways, fencing, septic prep, and more. Enter quantities where needed.</p>
+                </div>
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-6 relative group-hover:-translate-y-2 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-green-light text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-cream">3</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-charcoal mb-3">Get Your Cost Range</h3>
+                    <p class="text-gray-mid leading-relaxed max-w-sm">Instantly receive a line-by-line planning estimate tailored to your specific conditions.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="trust-section">
-        <div class="section-container">
-            <div class="section-header">
-                <h2>Why Developers Trust plotcost</h2>
-                <div class="section-divider"></div>
+    <!-- Why Developers Trust -->
+    <section class="py-12 md:py-20 bg-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-charcoal mb-4">Why Developers Trust plotcost</h2>
+                <div class="w-20 h-1 bg-green-light mx-auto rounded-full"></div>
             </div>
-            <div class="trust-grid">
-                <div class="trust-card"><div class="trust-emoji">&#9889;</div><h3>Planning Ranges, Not Guesses</h3><p>Our estimates are planning ranges based on typical regional cost data and project parameters. Always get bids from local professionals.</p></div>
-                <div class="trust-card"><div class="trust-emoji">&#127959;</div><h3>Built for Professionals</h3><p>Designed for landowners, developers, and contractors who need a quick cost ballpark before the quote process begins.</p></div>
-                <div class="trust-card"><div class="trust-emoji">&#128274;</div><h3>Private & Secure</h3><p>Your data stays in your browser. No account required, no tracking, no data collection.</p></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="examples-section" id="example-projects">
-        <div class="section-container">
-            <div class="section-header">
-                <h2>Example Projects</h2>
-                <div class="section-divider"></div>
-            </div>
-            <div class="examples-grid">
-                <div class="example-card"><img src="https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80" alt="Rural homesite" loading="lazy"><div class="example-card-body"><h3>Rural Homesite Prep</h3><p class="specs">5 acres, lightly wooded</p><p class="range">$18,000 – $45,000</p></div></div>
-                <div class="example-card"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" alt="Gravel driveway" loading="lazy"><div class="example-card-body"><h3>Gravel Driveway & Clearing</h3><p class="specs">1.2 acres, flat terrain</p><p class="range">$8,500 – $22,000</p></div></div>
-                <div class="example-card"><img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80" alt="Wooded land" loading="lazy"><div class="example-card-body"><h3>Wooded Land Development</h3><p class="specs">12 acres, heavily wooded, steep slope</p><p class="range">$95,000 – $250,000+</p></div></div>
-            </div>
-            <p class="example-disclaimer">Disclaimer: These are example planning ranges, not actual bids.</p>
-        </div>
-    </section>
-
-    <section class="faq-section" id="faq">
-        <div class="section-container">
-            <div class="section-header">
-                <h2>Frequently Asked Questions</h2>
-                <div class="section-divider"></div>
-            </div>
-            <div class="faq-list">
-                <div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open')"><span>How accurate are the estimates?</span><span class="chevron">&#9660;</span></button><div class="faq-answer">Our estimates are planning ranges based on typical regional cost data and project parameters. They are NOT contractor quotes — always get bids from local professionals before committing.</div></div>
-                <div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open')"><span>What does an estimate include?</span><span class="chevron">&#9660;</span></button><div class="faq-answer">A single estimate session where you can input your property details, select projects, and receive a full line-by-line cost breakdown with PDF download.</div></div>
-                <div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open')"><span>Is this free to use?</span><span class="chevron">&#9660;</span></button><div class="faq-answer">Yes, plotcost is completely free. No account needed, no payment required. Just open the calculator and start estimating.</div></div>
-                <div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open')"><span>Who is this for?</span><span class="chevron">&#9660;</span></button><div class="faq-answer">Designed for landowners, developers, and contractors who need a quick cost ballpark before the quote process begins.</div></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto mb-16">
+                <div class="flex flex-col text-center items-center">
+                    <div class="text-4xl mb-4">&#9889;</div>
+                    <h3 class="text-xl font-bold text-charcoal mb-2">Planning Ranges, Not Guesses</h3>
+                    <p class="text-gray-mid leading-relaxed">Our estimates are planning ranges based on typical regional cost data and project parameters. They are NOT contractor quotes — always get bids from local professionals.</p>
+                </div>
+                <div class="flex flex-col text-center items-center">
+                    <div class="text-4xl mb-4">&#127959;&#65039;</div>
+                    <h3 class="text-xl font-bold text-charcoal mb-2">Built for Professionals</h3>
+                    <p class="text-gray-mid leading-relaxed">Designed for landowners, developers, and contractors who need a quick cost ballpark before the quote process begins.</p>
+                </div>
+                <div class="flex flex-col text-center items-center">
+                    <div class="text-4xl mb-4">&#128274;</div>
+                    <h3 class="text-xl font-bold text-charcoal mb-2">Private & Secure</h3>
+                    <p class="text-gray-mid leading-relaxed">Your data stays in your browser. No account required, no tracking, no data collection.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="cta-section">
-        <h2>Unlock Your Land Cost Estimate</h2>
-        <p>Smart land cost planning for serious developers. Get your full cost breakdown in minutes.</p>
-        <a class="btn btn-hero" onclick="showCalculator()">Open Calculator</a>
+    <!-- Example Projects -->
+    <section id="example-projects" class="py-20 bg-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-charcoal mb-4">Example Projects</h2>
+                <div class="w-20 h-1 bg-green-light mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80" alt="Rural Homesite Prep" class="w-full h-48 object-cover" loading="lazy">
+                    <div class="p-5 flex-grow flex flex-col">
+                        <h3 class="text-lg font-bold text-charcoal mb-1">Rural Homesite Prep</h3>
+                        <p class="text-sm text-gray-mid mb-3">5 acres, lightly wooded</p>
+                        <p class="text-green-dark font-bold text-lg mt-auto">$18,000 – $45,000</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" alt="Gravel Driveway" class="w-full h-48 object-cover" loading="lazy">
+                    <div class="p-5 flex-grow flex flex-col">
+                        <h3 class="text-lg font-bold text-charcoal mb-1">Gravel Driveway & Clearing</h3>
+                        <p class="text-sm text-gray-mid mb-3">1.2 acres, flat terrain</p>
+                        <p class="text-green-dark font-bold text-lg mt-auto">$8,500 – $22,000</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80" alt="Wooded Land" class="w-full h-48 object-cover" loading="lazy">
+                    <div class="p-5 flex-grow flex flex-col">
+                        <h3 class="text-lg font-bold text-charcoal mb-1">Wooded Land Development</h3>
+                        <p class="text-sm text-gray-mid mb-3">12 acres, heavily wooded, steep slope</p>
+                        <p class="text-green-dark font-bold text-lg mt-auto">$95,000 – $250,000+</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm text-gray-mid mt-8">Disclaimer: These are example planning ranges, not actual bids.</p>
+        </div>
     </section>
 
-    <footer class="footer">
-        <p class="disclaimer-text">plotcost provides rough planning ranges based on internal assumptions. These are NOT live contractor quotes, official market data, or actual bids. Always consult licensed contractors for project pricing.</p>
-        <p>&copy; 2025 plotcost. All rights reserved.</p>
+    <!-- FAQ -->
+    <section id="faq" class="py-20 bg-cream">
+        <div class="container mx-auto px-4 md:px-6 max-w-3xl">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-charcoal mb-4">Frequently Asked Questions</h2>
+                <div class="w-20 h-1 bg-green-light mx-auto rounded-full"></div>
+            </div>
+            <div class="w-full">
+                <div class="border-b border-gray-200 faq-item">
+                    <button onclick="this.parentElement.classList.toggle('faq-open')" class="text-left text-lg font-medium text-charcoal py-4 w-full flex items-center justify-between hover:no-underline">
+                        <span>How accurate are the estimates?</span>
+                        <svg class="w-4 h-4 shrink-0 text-gray-400 transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer text-gray-600 pb-4">Our estimates are planning ranges based on typical regional cost data and project parameters. They are NOT contractor quotes — always get bids from local professionals before committing.</div>
+                </div>
+                <div class="border-b border-gray-200 faq-item">
+                    <button onclick="this.parentElement.classList.toggle('faq-open')" class="text-left text-lg font-medium text-charcoal py-4 w-full flex items-center justify-between hover:no-underline">
+                        <span>What does an estimate include?</span>
+                        <svg class="w-4 h-4 shrink-0 text-gray-400 transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer text-gray-600 pb-4">A single estimate session where you can input your property details, select projects, and receive a full line-by-line cost breakdown with PDF download.</div>
+                </div>
+                <div class="border-b border-gray-200 faq-item">
+                    <button onclick="this.parentElement.classList.toggle('faq-open')" class="text-left text-lg font-medium text-charcoal py-4 w-full flex items-center justify-between hover:no-underline">
+                        <span>Is this free to use?</span>
+                        <svg class="w-4 h-4 shrink-0 text-gray-400 transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer text-gray-600 pb-4">Yes, plotcost is completely free. No account needed, no payment required. Just open the calculator and start estimating.</div>
+                </div>
+                <div class="border-b border-gray-200 faq-item">
+                    <button onclick="this.parentElement.classList.toggle('faq-open')" class="text-left text-lg font-medium text-charcoal py-4 w-full flex items-center justify-between hover:no-underline">
+                        <span>Who is this for?</span>
+                        <svg class="w-4 h-4 shrink-0 text-gray-400 transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer text-gray-600 pb-4">Designed for landowners, developers, and contractors who need a quick cost ballpark before the quote process begins. It's a smart starting point, not a replacement for professional bids.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 bg-charcoal text-center">
+        <p class="text-sm text-gray-400 max-w-xl mx-auto mb-3 px-4">plotcost provides rough planning ranges based on internal assumptions. These are NOT live contractor quotes, official market data, or actual bids. Always consult licensed contractors for project pricing.</p>
+        <p class="text-sm text-gray-500">&copy; 2025 plotcost. All rights reserved.</p>
     </footer>
 </div>
 
 <!-- ==================== CALCULATOR PAGE ==================== -->
-<div class="calculator-page" id="calculator-page">
-    <nav class="nav">
-        <div class="nav-container">
-            <a class="nav-logo" onclick="showLanding()">plotcost</a>
-            <div class="nav-links"><a onclick="showLanding()">Back to Home</a></div>
+<div id="calculator-page" class="page-hidden">
+    <!-- Calculator Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm py-3">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between">
+                <a onclick="showLanding()" class="text-2xl font-bold text-green-dark cursor-pointer">plotcost</a>
+                <button onclick="showLanding()" class="text-gray-600 hover:text-green-dark font-medium transition text-sm">Back to Home</button>
+            </div>
         </div>
     </nav>
 
-    <div class="calc-container">
-        <a class="back-link" onclick="showLanding()">&larr; Back to home</a>
-
-        <!-- Progress -->
-        <div class="progress-bar" id="progress-bar">
-            <div class="progress-step" data-step="1"></div>
-            <div class="progress-step" data-step="2"></div>
-            <div class="progress-step" data-step="3"></div>
-            <div class="progress-step" data-step="4"></div>
+    <main class="flex-grow pt-24 pb-20 min-h-screen bg-cream">
+        <!-- Progress Stepper -->
+        <div id="progress-stepper" class="max-w-2xl mx-auto mb-10 px-4">
+            <div class="flex items-center justify-between" id="stepper-container"></div>
         </div>
 
-        <!-- STEP 1: Project Type -->
-        <div class="calc-step" id="calc-step-1">
-            <div class="step-label">Step 1 of 4</div>
-            <div class="card">
-                <div class="card-title">Select Your Project Type</div>
-                <div class="card-subtitle">Pick the project type that best describes what you want to build.</div>
-                <div class="grid-select" id="project-grid"></div>
+        <!-- STEP 1: Project -->
+        <div data-step="1" class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-charcoal mb-2">What are you developing?</h1>
+                <p class="text-gray-mid text-lg">Pick the project type that best describes what you want to build.</p>
             </div>
-            <button class="btn-calc btn-calc-primary" id="step1-next" disabled onclick="goToStep(2)">Next</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8" id="project-grid"></div>
+            <div class="flex justify-end">
+                <button id="step1-next" onclick="goToStep(2)" disabled class="px-8 py-3 rounded-lg font-medium text-white bg-green-dark hover:bg-green-mid disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+            </div>
         </div>
 
         <!-- STEP 2: Acreage -->
-        <div class="calc-step hidden" id="calc-step-2">
-            <div class="step-label">Step 2 of 4</div>
-            <div class="card">
-                <div class="card-title">How many acres?</div>
-                <div class="card-subtitle" id="step2-subtitle"></div>
-                <div class="form-group">
-                    <input type="number" id="acres-input" class="input-large" placeholder="0" min="0.1" step="0.1">
-                    <div class="input-hint">1 acre = 43,560 sq ft. A standard US football field is about 1.3 acres.</div>
-                </div>
-                <div id="acres-warning" class="warning-box hidden">That's a large project. For projects this size we strongly recommend getting multiple contractor and engineering quotes before committing to a budget.</div>
+        <div data-step="2" class="hidden max-w-2xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-charcoal mb-2">How many acres?</h1>
+                <p class="text-gray-mid text-lg" id="step2-subtitle">Total acreage for your project.</p>
             </div>
-            <div class="btn-row">
-                <button class="btn-calc btn-calc-back" onclick="goToStep(1)">Back</button>
-                <button class="btn-calc btn-calc-primary" id="step2-next" disabled onclick="goToStep(3)">Next</button>
+            <div class="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+                <input type="number" id="acres-input" placeholder="0" min="0" step="any" class="w-full text-center text-5xl font-bold text-charcoal bg-transparent border-none outline-none placeholder:text-gray-300" style="-webkit-appearance: textfield; -moz-appearance: textfield; appearance: textfield;">
+                <p class="text-center text-sm text-gray-mid mt-4">1 acre = 43,560 sq ft. A standard US football field is about 1.3 acres.</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 mb-8" id="acres-presets"></div>
+            <div id="acres-warning" class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 hidden">
+                <p class="text-sm text-amber-800">That's a large project. Your estimate is generated, but for projects this size we strongly recommend getting multiple contractor and engineering quotes before committing to a budget.</p>
+            </div>
+            <div class="flex justify-between">
+                <button onclick="goToStep(1)" class="px-6 py-3 rounded-lg font-medium text-charcoal bg-white border border-gray-200 hover:bg-gray-50 transition-colors">Back</button>
+                <button id="step2-next" onclick="goToStep(3)" disabled class="px-8 py-3 rounded-lg font-medium text-white bg-green-dark hover:bg-green-mid disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
             </div>
         </div>
 
         <!-- STEP 3: Terrain -->
-        <div class="calc-step hidden" id="calc-step-3">
-            <div class="step-label">Step 3 of 4</div>
-            <div class="card">
-                <div class="card-title">What's the terrain like?</div>
-                <div class="card-subtitle">The condition of the land is one of the biggest cost drivers for any development project.</div>
-                <div class="grid-select" id="terrain-grid"></div>
+        <div data-step="3" class="hidden max-w-3xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-charcoal mb-2">What's the terrain like?</h1>
+                <p class="text-gray-mid text-lg">The condition of the land is one of the biggest cost drivers for any development project.</p>
             </div>
-            <div class="btn-row">
-                <button class="btn-calc btn-calc-back" onclick="goToStep(2)">Back</button>
-                <button class="btn-calc btn-calc-primary" id="step3-next" disabled onclick="goToStep(4)">Next</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-10" id="terrain-grid"></div>
+            <div class="flex justify-between">
+                <button onclick="goToStep(2)" class="px-6 py-3 rounded-lg font-medium text-charcoal bg-white border border-gray-200 hover:bg-gray-50 transition-colors">Back</button>
+                <button id="step3-next" onclick="goToStep(4)" disabled class="px-8 py-3 rounded-lg font-medium text-white bg-green-dark hover:bg-green-mid disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
             </div>
         </div>
 
-        <!-- STEP 4: Budget (optional) -->
-        <div class="calc-step hidden" id="calc-step-4">
-            <div class="step-label">Step 4 of 4</div>
-            <div class="card">
-                <div class="card-title">What's your budget?</div>
-                <div class="card-subtitle">We'll tell you if it's realistic — and what to do if it isn't.</div>
-                <div class="form-group">
-                    <div class="input-dollar">
-                        <input type="number" id="budget-input" class="input-large" placeholder="0" min="0" step="1000" style="padding-left:2.5rem;">
+        <!-- STEP 4: Budget -->
+        <div data-step="4" class="hidden max-w-2xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-charcoal mb-2">What's your budget?</h1>
+                <p class="text-gray-mid text-lg">We'll tell you if it's realistic — and what to do if it isn't.</p>
+            </div>
+            <div id="budget-input-section">
+                <div class="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-3xl font-bold text-gray-400">$</span>
+                        <input type="text" id="budget-input" placeholder="0" class="w-full text-center text-5xl font-bold text-charcoal bg-transparent border-none outline-none placeholder:text-gray-300 pl-10">
                     </div>
                 </div>
+                <div class="flex flex-wrap justify-center gap-2 mb-6" id="budget-presets"></div>
             </div>
-            <div class="btn-row">
-                <button class="btn-calc btn-calc-back" onclick="goToStep(3)">Back</button>
-                <button class="btn-calc btn-calc-primary" id="step4-next" onclick="showResults()">Get My Estimate</button>
+            <div class="mb-8">
+                <label class="flex items-center gap-3 cursor-pointer justify-center">
+                    <input type="checkbox" id="no-budget-checkbox" onchange="toggleBudget()" class="w-5 h-5 rounded border-gray-300 text-green-dark focus:ring-green-dark">
+                    <span class="text-gray-mid">I don't have a set budget yet — just show me the estimate</span>
+                </label>
             </div>
-            <a class="skip-link" onclick="skipBudget()">I don't have a set budget yet — just show me the estimate</a>
+            <div class="flex justify-between items-center">
+                <button onclick="goToStep(3)" class="px-6 py-3 rounded-lg font-medium text-charcoal bg-white border border-gray-200 hover:bg-gray-50 transition-colors">Back</button>
+                <button id="step4-next" onclick="showResults()" class="px-8 py-4 rounded-lg font-medium text-lg text-white bg-green-dark hover:bg-green-mid disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Get My Estimate</button>
+            </div>
         </div>
 
         <!-- STEP 5: Results -->
-        <div class="calc-step hidden" id="calc-step-5">
-            <div class="results-header">
-                <h2>Land Development Cost Estimate</h2>
-                <div class="project-label" id="results-label"></div>
+        <div data-step="5" class="hidden">
+            <div class="max-w-[780px] mx-auto px-4 space-y-6" id="results-container">
+                <!-- Populated by JS -->
             </div>
-
-            <div class="estimate-range">
-                <span class="estimate-value" id="estimate-low"></span>
-                <span class="estimate-separator">&mdash;</span>
-                <span class="estimate-value" id="estimate-high"></span>
-            </div>
-
-            <div style="text-align:center; margin-bottom:1.5rem;">
-                <span class="confidence-badge" id="confidence-badge"></span>
-            </div>
-
-            <!-- Budget Analysis -->
-            <div id="budget-analysis" class="hidden"></div>
-
-            <!-- Cost Breakdown -->
-            <div class="card">
-                <div class="card-title">Where the cost comes from</div>
-                <table class="breakdown-table">
-                    <tbody id="breakdown-body"></tbody>
-                </table>
-            </div>
-
-            <!-- Cost Drivers -->
-            <div class="card">
-                <div class="card-title">What's driving your estimate</div>
-                <ul class="drivers-list" id="drivers-list"></ul>
-            </div>
-
-            <!-- Tips -->
-            <div class="card">
-                <div class="card-title">Things to keep in mind</div>
-                <ul class="tips-list" id="tips-list"></ul>
-            </div>
-
-            <!-- What to do next -->
-            <div class="card">
-                <div class="card-title">What to do next</div>
-                <ul class="tips-list">
-                    <li>Get 2–3 quotes from licensed local contractors and engineers</li>
-                    <li>Consider setting aside an additional 15–20% as a contingency buffer for site surprises.</li>
-                    <li>Use this range as your starting point. The more contractor and engineering quotes you get, the tighter your real budget will become.</li>
-                    <li>Adjust your scope and re-run if needed</li>
-                </ul>
-            </div>
-
-            <!-- Disclaimer -->
-            <div class="disclaimer-box">
-                <h4>Important Disclaimer</h4>
-                <p>This estimate is generated from internal planning assumptions and regional cost averages. It is not a contractor quote, official appraisal, or guarantee of actual project cost. Costs vary significantly based on local market conditions, site-specific factors, and contractor pricing. Always consult licensed contractors and engineers before making financial decisions.</p>
-            </div>
-
-            <!-- PDF Download -->
-            <button class="pdf-btn" id="pdf-btn" onclick="downloadPDF()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-                <span id="pdf-btn-text">Download PDF Summary</span>
-            </button>
-
-            <!-- Start Over -->
-            <button class="btn-calc btn-calc-secondary" style="margin-top:1rem;" onclick="resetCalculator()">Start Over</button>
         </div>
-    </div>
+    </main>
 </div>
 
 <script>
-// ==================== PAGE NAVIGATION ====================
-function showCalculator() {
-    document.getElementById('landing-page').classList.add('hidden');
-    document.getElementById('calculator-page').classList.add('active');
-    window.scrollTo(0, 0);
-}
-function showLanding() {
-    document.getElementById('landing-page').classList.remove('hidden');
-    document.getElementById('calculator-page').classList.remove('active');
-    window.scrollTo(0, 0);
-}
-
 // ==================== DATA ====================
 const PROJECTS = {
-    single_family_home: { key: "single_family_home", icon: "\u{1F3E0}", name: "Single Family Home", description: "Site prep, foundation, and infrastructure for a single residential build.", baseMin: 15000, baseMax: 40000, perAcreMin: 8000, perAcreMax: 25000 },
-    multi_family: { key: "multi_family", icon: "\u{1F3D8}\uFE0F", name: "Multi-Family Housing", description: "Duplex, triplex, townhomes, or small apartment site development.", baseMin: 25000, baseMax: 60000, perAcreMin: 12000, perAcreMax: 35000 },
-    commercial_building: { key: "commercial_building", icon: "\u{1F3E2}", name: "Commercial Building", description: "Office, professional services, or general commercial development.", baseMin: 30000, baseMax: 75000, perAcreMin: 15000, perAcreMax: 45000 },
-    retail_strip: { key: "retail_strip", icon: "\u{1F6CD}\uFE0F", name: "Retail / Strip Center", description: "Storefront, strip mall, or single-tenant retail building site.", baseMin: 20000, baseMax: 50000, perAcreMin: 12000, perAcreMax: 35000 },
-    industrial_warehouse: { key: "industrial_warehouse", icon: "\u{1F3ED}", name: "Industrial / Warehouse", description: "Large-footprint warehouse, distribution, or light industrial.", baseMin: 20000, baseMax: 55000, perAcreMin: 10000, perAcreMax: 30000 },
-    mixed_use: { key: "mixed_use", icon: "\u{1F3D9}\uFE0F", name: "Mixed-Use Development", description: "Combined residential, retail, and/or commercial in one project.", baseMin: 35000, baseMax: 80000, perAcreMin: 18000, perAcreMax: 50000 },
-    agricultural: { key: "agricultural", icon: "\u{1F33E}", name: "Agricultural / Farm", description: "Farm buildings, pasture conversion, agricultural infrastructure.", baseMin: 5000, baseMax: 15000, perAcreMin: 2000, perAcreMax: 8000 },
-    recreational_park: { key: "recreational_park", icon: "\u{1F333}", name: "Recreational / Park", description: "Parks, sports fields, trails, or community recreation areas.", baseMin: 10000, baseMax: 30000, perAcreMin: 5000, perAcreMax: 15000 },
-    solar_farm: { key: "solar_farm", icon: "\u2600\uFE0F", name: "Solar Farm", description: "Site preparation for utility-scale solar panel installation.", baseMin: 15000, baseMax: 40000, perAcreMin: 8000, perAcreMax: 20000 },
-    subdivision: { key: "subdivision", icon: "\u{1F3D7}\uFE0F", name: "Residential Subdivision", description: "Multi-lot residential subdivision with roads and utilities.", baseMin: 50000, baseMax: 120000, perAcreMin: 20000, perAcreMax: 60000 },
-    parking_lot: { key: "parking_lot", icon: "\u{1F17F}\uFE0F", name: "Parking Lot", description: "Paved or gravel parking area with drainage and striping.", baseMin: 10000, baseMax: 25000, perAcreMin: 8000, perAcreMax: 18000 },
-    custom: { key: "custom", icon: "\u2699\uFE0F", name: "Custom / Other", description: "A custom or one-off project that doesn't fit the above categories.", baseMin: 10000, baseMax: 30000, perAcreMin: 5000, perAcreMax: 20000 }
+    single_family_home:{key:"single_family_home",icon:"\u{1F3E0}",name:"Single Family Home",description:"Site prep, foundation, and infrastructure for a single residential build.",baseMin:15000,baseMax:40000,perAcreMin:8000,perAcreMax:25000},
+    multi_family:{key:"multi_family",icon:"\u{1F3D8}\uFE0F",name:"Multi-Family Housing",description:"Duplex, triplex, townhomes, or small apartment site development.",baseMin:25000,baseMax:60000,perAcreMin:12000,perAcreMax:35000},
+    commercial_building:{key:"commercial_building",icon:"\u{1F3E2}",name:"Commercial Building",description:"Office, professional services, or general commercial development.",baseMin:30000,baseMax:75000,perAcreMin:15000,perAcreMax:45000},
+    retail_strip:{key:"retail_strip",icon:"\u{1F6CD}\uFE0F",name:"Retail / Strip Center",description:"Storefront, strip mall, or single-tenant retail building site.",baseMin:20000,baseMax:50000,perAcreMin:12000,perAcreMax:35000},
+    industrial_warehouse:{key:"industrial_warehouse",icon:"\u{1F3ED}",name:"Industrial / Warehouse",description:"Large-footprint warehouse, distribution, or light industrial.",baseMin:20000,baseMax:55000,perAcreMin:10000,perAcreMax:30000},
+    mixed_use:{key:"mixed_use",icon:"\u{1F3D9}\uFE0F",name:"Mixed-Use Development",description:"Combined residential, retail, and/or commercial in one project.",baseMin:35000,baseMax:80000,perAcreMin:18000,perAcreMax:50000},
+    agricultural:{key:"agricultural",icon:"\u{1F33E}",name:"Agricultural / Farm",description:"Farm buildings, pasture conversion, agricultural infrastructure.",baseMin:5000,baseMax:15000,perAcreMin:2000,perAcreMax:8000},
+    recreational_park:{key:"recreational_park",icon:"\u{1F333}",name:"Recreational / Park",description:"Parks, sports fields, trails, or community recreation areas.",baseMin:10000,baseMax:30000,perAcreMin:5000,perAcreMax:15000},
+    solar_farm:{key:"solar_farm",icon:"\u2600\uFE0F",name:"Solar Farm",description:"Site preparation for utility-scale solar panel installation.",baseMin:15000,baseMax:40000,perAcreMin:8000,perAcreMax:20000},
+    subdivision:{key:"subdivision",icon:"\u{1F3D7}\uFE0F",name:"Residential Subdivision",description:"Multi-lot residential subdivision with roads and utilities.",baseMin:50000,baseMax:120000,perAcreMin:20000,perAcreMax:60000},
+    parking_lot:{key:"parking_lot",icon:"\u{1F17F}\uFE0F",name:"Parking Lot",description:"Paved or gravel parking area with drainage and striping.",baseMin:10000,baseMax:25000,perAcreMin:8000,perAcreMax:18000},
+    custom:{key:"custom",icon:"\u2699\uFE0F",name:"Custom / Other",description:"A custom or one-off project that doesn\u2019t fit the above categories.",baseMin:10000,baseMax:30000,perAcreMin:5000,perAcreMax:20000}
 };
 
 const TERRAINS = {
-    flat: { key: "flat", icon: "\u{1F7E9}", name: "Flat", description: "Level land with no significant slope.", multiplier: 1.0 },
-    gently_sloped: { key: "gently_sloped", icon: "\u2197\uFE0F", name: "Gently Sloped", description: "Mild slope, may need light grading.", multiplier: 1.15 },
-    sloped: { key: "sloped", icon: "\u26F0\uFE0F", name: "Sloped", description: "Noticeable slope requiring grading and retaining walls.", multiplier: 1.35 },
-    steep: { key: "steep", icon: "\u{1F3D4}\uFE0F", name: "Steep", description: "Steep grade requiring substantial earthwork.", multiplier: 1.65 },
-    wooded: { key: "wooded", icon: "\u{1F332}", name: "Wooded", description: "Forested land. Requires clearing and stump removal.", multiplier: 1.45 },
-    rocky: { key: "rocky", icon: "\u{1FAA8}", name: "Rocky", description: "Rock outcroppings. Specialized equipment needed.", multiplier: 1.55 },
-    wetland: { key: "wetland", icon: "\u{1F4A7}", name: "Wetland / Marsh", description: "Wet or marshy. May require permits and fill.", multiplier: 1.85 },
-    mixed: { key: "mixed", icon: "\u{1F5FA}\uFE0F", name: "Mixed Terrain", description: "A combination of conditions across the site.", multiplier: 1.3 }
+    flat:{key:"flat",icon:"\u{1F7E9}",name:"Flat",description:"Level land with no significant slope. Easiest to build on.",multiplier:1.0,impact:"neutral"},
+    gently_sloped:{key:"gently_sloped",icon:"\u2197\uFE0F",name:"Gently Sloped",description:"Mild slope, may need light grading.",multiplier:1.15,impact:"low"},
+    sloped:{key:"sloped",icon:"\u26F0\uFE0F",name:"Sloped",description:"Noticeable slope requiring grading and possibly retaining walls.",multiplier:1.35,impact:"moderate"},
+    steep:{key:"steep",icon:"\u{1F3D4}\uFE0F",name:"Steep",description:"Steep grade requiring substantial earthwork and engineering.",multiplier:1.65,impact:"high"},
+    wooded:{key:"wooded",icon:"\u{1F332}",name:"Wooded",description:"Forested or heavily treed land. Requires clearing and stump removal.",multiplier:1.45,impact:"high"},
+    rocky:{key:"rocky",icon:"\u{1FAA8}",name:"Rocky",description:"Rock outcroppings or hard substrate. Specialized equipment needed.",multiplier:1.55,impact:"high"},
+    wetland:{key:"wetland",icon:"\u{1F4A7}",name:"Wetland / Marsh",description:"Wet or marshy land. Most expensive \u2014 may require permits and fill.",multiplier:1.85,impact:"high"},
+    mixed:{key:"mixed",icon:"\u{1F5FA}\uFE0F",name:"Mixed Terrain",description:"A combination of conditions across the site.",multiplier:1.3,impact:"moderate"}
 };
 
-const TERRAIN_TIPS = {
-    flat: ["Flat sites are the most cost-efficient \u2014 most of your spend will go to actual construction, not earthwork."],
-    gently_sloped: ["Plan for some grading work. A drainage assessment is worth the upfront cost."],
-    sloped: ["Sloped sites typically need cut-and-fill earthwork. Get a topographic survey before finalizing your budget.", "Retaining walls add cost \u2014 factor in $30\u2013$60 per square foot of wall face."],
-    steep: ["Steep sites often require geotechnical engineering. Budget $5,000\u2013$15,000 for surveys and reports.", "Foundation costs can rise 30\u201350% on steep terrain. Talk to a structural engineer early."],
-    wooded: ["Get a separate quote for tree removal, stump grinding, and debris haul-off \u2014 these can vary 3x between contractors.", "Check local permits \u2014 some jurisdictions limit how many trees you can remove."],
-    rocky: ["Rock excavation is expensive and unpredictable. Get a soil/rock survey before committing to a fixed budget.", "Ask contractors about hydraulic breaker vs. blasting \u2014 this changes the cost dramatically."],
-    wetland: ["Wetland sites typically require state and federal permits. Budget 6\u201312 months for the permitting process alone.", "Mitigation requirements can add $50,000+ to your project. Consult an environmental engineer first."],
-    mixed: ["Get a detailed site survey to identify which areas have which conditions. Phasing your work can reduce overall cost."]
-};
-
-const PROJECT_TIPS = {
-    single_family_home: ["Talk to your local building department about utility hookup fees \u2014 they can range from $5k to $30k."],
-    multi_family: ["Multi-family projects often require traffic and parking studies. Build that into your timeline."],
-    commercial_building: ["Commercial sites usually need ADA-compliant access, fire suppression, and stormwater management."],
-    retail_strip: ["Plan parking ratios carefully \u2014 most jurisdictions require 4\u20135 spaces per 1,000 sq ft of retail."],
-    industrial_warehouse: ["Heavy truck access and turning radii drive a lot of the site cost. Engage a civil engineer early."],
-    mixed_use: ["Mixed-use zoning approval can take 12\u201318 months. Talk to planning before you invest in design."],
-    agricultural: ["Farm-use designation may qualify you for reduced permit fees in many states."],
-    recreational_park: ["Public recreation projects often qualify for state and federal grants \u2014 research before you commit funding."],
-    solar_farm: ["Get an interconnection study from your utility before assuming your site is viable for grid-tied solar."],
-    subdivision: ["Subdivision approval is the longest-pole \u2014 plan 18\u201336 months from purchase to first lot sale."],
-    parking_lot: ["Stormwater management is the hidden cost \u2014 pervious paving may save you from a large detention pond."],
-    custom: ["For non-standard projects, get input from at least 3 different specialists before finalizing scope."]
-};
-
-const GENERAL_TIPS = [
-    "Always get 2\u20133 quotes from licensed local contractors. Pricing varies dramatically by region and crew availability.",
-    "Build a 15\u201320% contingency into your budget. Site work always uncovers surprises.",
-    "Schedule heavy site work during dry months \u2014 wet weather can add 20\u201340% to earthwork costs."
-];
+const TERRAIN_TIPS={flat:["Flat sites are the most cost-efficient \u2014 most of your spend will go to actual construction, not earthwork."],gently_sloped:["Plan for some grading work. A drainage assessment is worth the upfront cost."],sloped:["Sloped sites typically need cut-and-fill earthwork. Get a topographic survey before finalizing your budget.","Retaining walls add cost \u2014 factor in $30\u2013$60 per square foot of wall face."],steep:["Steep sites often require geotechnical engineering. Budget $5,000\u2013$15,000 for surveys and reports.","Foundation costs can rise 30\u201350% on steep terrain. Talk to a structural engineer early."],wooded:["Get a separate quote for tree removal, stump grinding, and debris haul-off \u2014 these can vary 3x between contractors.","Check local permits \u2014 some jurisdictions limit how many trees you can remove."],rocky:["Rock excavation is expensive and unpredictable. Get a soil/rock survey before committing to a fixed budget.","Ask contractors about hydraulic breaker vs. blasting \u2014 this changes the cost dramatically."],wetland:["Wetland sites typically require state and federal permits. Budget 6\u201312 months for the permitting process alone.","Mitigation requirements can add $50,000+ to your project. Consult an environmental engineer first."],mixed:["Get a detailed site survey to identify which areas have which conditions. Phasing your work can reduce overall cost."]};
+const PROJECT_TIPS={single_family_home:["Talk to your local building department about utility hookup fees \u2014 they can range from $5k to $30k."],multi_family:["Multi-family projects often require traffic and parking studies. Build that into your timeline."],commercial_building:["Commercial sites usually need ADA-compliant access, fire suppression, and stormwater management."],retail_strip:["Plan parking ratios carefully \u2014 most jurisdictions require 4\u20135 spaces per 1,000 sq ft of retail."],industrial_warehouse:["Heavy truck access and turning radii drive a lot of the site cost. Engage a civil engineer early."],mixed_use:["Mixed-use zoning approval can take 12\u201318 months. Talk to planning before you invest in design."],agricultural:["Farm-use designation may qualify you for reduced permit fees in many states."],recreational_park:["Public recreation projects often qualify for state and federal grants \u2014 research before you commit funding."],solar_farm:["Get an interconnection study from your utility before assuming your site is viable for grid-tied solar."],subdivision:["Subdivision approval is the longest-pole \u2014 plan 18\u201336 months from purchase to first lot sale."],parking_lot:["Stormwater management is the hidden cost \u2014 pervious paving may save you from a large detention pond."],custom:["For non-standard projects, get input from at least 3 different specialists before finalizing scope."]};
+const GENERAL_TIPS=["Always get 2\u20133 quotes from licensed local contractors. Pricing varies dramatically by region and crew availability.","Build a 15\u201320% contingency into your budget. Site work always uncovers surprises.","Schedule heavy site work during dry months \u2014 wet weather can add 20\u201340% to earthwork costs."];
+const ACRE_PRESETS=[{label:"0.25 acres",value:0.25},{label:"1 acre",value:1},{label:"5 acres",value:5},{label:"20 acres",value:20},{label:"100 acres",value:100}];
+const BUDGET_PRESETS=[{label:"Under $50K",value:25000},{label:"$50K \u2013 $250K",value:150000},{label:"$250K \u2013 $1M",value:500000},{label:"$1M+",value:1500000}];
+const STEPS=[{label:"Project",step:1},{label:"Space",step:2},{label:"Land Type",step:3},{label:"Budget",step:4},{label:"Results",step:5}];
 
 // ==================== STATE ====================
-let state = { step: 1, project: null, acres: '', terrain: null, budget: '', hasBudget: true };
-let results = null;
+let state={step:1,project:null,acres:"",terrain:null,budget:"",hasBudget:true};
+let results=null;
 
-// ==================== STEP NAVIGATION ====================
-function goToStep(n) {
-    state.step = n;
-    for (let i = 1; i <= 5; i++) {
-        const el = document.getElementById('calc-step-' + i);
-        if (el) el.classList.toggle('hidden', i !== n);
-    }
-    updateProgress();
-    window.scrollTo({ top: document.querySelector('.calc-container').offsetTop - 80, behavior: 'smooth' });
-}
+// ==================== NAVIGATION ====================
+function showCalculator(){document.getElementById('landing-page').classList.add('page-hidden');document.getElementById('landing-page').classList.remove('page-visible');document.getElementById('calculator-page').classList.remove('page-hidden');document.getElementById('calculator-page').classList.add('page-visible');window.scrollTo(0,0);}
+function showLanding(){document.getElementById('calculator-page').classList.add('page-hidden');document.getElementById('calculator-page').classList.remove('page-visible');document.getElementById('landing-page').classList.remove('page-hidden');document.getElementById('landing-page').classList.add('page-visible');window.scrollTo(0,0);}
+function scrollToSection(sel){const el=document.querySelector(sel);if(el)el.scrollIntoView({behavior:'smooth'});}
 
-function updateProgress() {
-    document.querySelectorAll('.progress-step').forEach(el => {
-        const s = parseInt(el.dataset.step);
-        el.classList.toggle('completed', s < state.step);
-        el.classList.toggle('active', s === state.step);
+// ==================== STEPPER ====================
+function renderStepper(){
+    const c=document.getElementById('stepper-container');
+    c.innerHTML='';
+    STEPS.forEach((s,i)=>{
+        const isActive=state.step===s.step,isDone=state.step>s.step;
+        const wrap=document.createElement('div');wrap.className='flex items-center flex-1'+(i===STEPS.length-1?' !flex-none':'');
+        wrap.innerHTML=`<div class="flex flex-col items-center"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${isDone?'bg-green-dark text-white':isActive?'bg-green-dark text-white ring-4 ring-green-100':'bg-gray-200 text-gray-500'}">${isDone?'\u2713':s.step}</div><span class="text-xs mt-1.5 font-medium ${isActive||isDone?'text-green-dark':'text-gray-400'}">${s.label}</span></div>${i<STEPS.length-1?`<div class="flex-1 h-0.5 mx-2 mt-[-18px] ${state.step>s.step?'bg-green-dark':'bg-gray-200'}"></div>`:''}`;
+        c.appendChild(wrap);
     });
 }
 
-// ==================== RENDER ====================
-function renderProjectGrid() {
-    const grid = document.getElementById('project-grid');
-    Object.values(PROJECTS).forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'grid-select-item';
-        item.dataset.key = p.key;
-        item.innerHTML = `<div class="icon">${p.icon}</div><div class="name">${p.name}</div><div class="desc">${p.description}</div>`;
-        item.addEventListener('click', () => {
-            state.project = p.key;
-            document.querySelectorAll('#project-grid .grid-select-item').forEach(el => el.classList.toggle('selected', el.dataset.key === p.key));
-            document.getElementById('step1-next').disabled = false;
-        });
-        grid.appendChild(item);
+function goToStep(n){
+    state.step=n;
+    document.querySelectorAll('[data-step]').forEach(el=>{el.classList.toggle('hidden',parseInt(el.dataset.step)!==n);});
+    if(n===2&&state.project){const p=PROJECTS[state.project];document.getElementById('step2-subtitle').textContent=`Total acreage for your ${p.name.toLowerCase()} project.`;}
+    renderStepper();
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== RENDER GRIDS ====================
+function renderProjectGrid(){
+    const grid=document.getElementById('project-grid');
+    Object.values(PROJECTS).forEach(p=>{
+        const btn=document.createElement('button');
+        btn.dataset.key=p.key;
+        btn.className='relative text-left p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm';
+        btn.innerHTML=`<div class="flex items-start gap-3"><span class="text-2xl shrink-0">${p.icon}</span><div><div class="font-semibold text-charcoal text-sm">${p.name}</div><div class="text-xs text-gray-mid mt-1 leading-relaxed">${p.description}</div></div></div>`;
+        btn.onclick=()=>selectProject(p.key);
+        grid.appendChild(btn);
     });
 }
 
-function renderTerrainGrid() {
-    const grid = document.getElementById('terrain-grid');
-    Object.values(TERRAINS).forEach(t => {
-        const item = document.createElement('div');
-        item.className = 'grid-select-item';
-        item.dataset.key = t.key;
-        item.innerHTML = `<div class="icon">${t.icon}</div><div class="name">${t.name}</div><div class="desc">${t.description}</div>`;
-        item.addEventListener('click', () => {
-            state.terrain = t.key;
-            document.querySelectorAll('#terrain-grid .grid-select-item').forEach(el => el.classList.toggle('selected', el.dataset.key === t.key));
-            document.getElementById('step3-next').disabled = false;
-        });
-        grid.appendChild(item);
+function renderTerrainGrid(){
+    const grid=document.getElementById('terrain-grid');
+    Object.values(TERRAINS).forEach(t=>{
+        const btn=document.createElement('button');
+        btn.dataset.key=t.key;
+        btn.className='relative text-left p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:border-gray-300';
+        btn.innerHTML=`<div class="flex items-start gap-3"><span class="text-xl shrink-0">${t.icon}</span><div><div class="font-semibold text-charcoal text-sm">${t.name}</div><div class="text-xs text-gray-mid mt-0.5 leading-relaxed">${t.description}</div></div></div>`;
+        btn.onclick=()=>selectTerrain(t.key);
+        grid.appendChild(btn);
     });
 }
 
-// Acreage input
-document.getElementById('acres-input').addEventListener('input', function() {
-    state.acres = this.value;
-    const v = parseFloat(this.value);
-    document.getElementById('step2-next').disabled = !(v > 0);
-    document.getElementById('acres-warning').classList.toggle('hidden', !(v > 500));
+function renderAcrePresets(){
+    const c=document.getElementById('acres-presets');
+    ACRE_PRESETS.forEach(p=>{
+        const btn=document.createElement('button');
+        btn.className='px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white border-gray-200 text-charcoal hover:bg-gray-50';
+        btn.textContent=p.label;
+        btn.dataset.value=p.value;
+        btn.onclick=()=>{
+            state.acres=String(p.value);
+            document.getElementById('acres-input').value=p.value;
+            updateAcrePresets();
+            document.getElementById('step2-next').disabled=false;
+            document.getElementById('acres-warning').classList.toggle('hidden',p.value<=500);
+        };
+        c.appendChild(btn);
+    });
+}
+
+function renderBudgetPresets(){
+    const c=document.getElementById('budget-presets');
+    BUDGET_PRESETS.forEach(p=>{
+        const btn=document.createElement('button');
+        btn.className='px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-charcoal hover:bg-gray-50 transition-colors';
+        btn.textContent=p.label;
+        btn.onclick=()=>{state.budget=String(p.value);state.hasBudget=true;document.getElementById('budget-input').value=parseInt(p.value).toLocaleString();document.getElementById('no-budget-checkbox').checked=false;document.getElementById('budget-input-section').classList.remove('hidden');};
+        c.appendChild(btn);
+    });
+}
+
+function updateAcrePresets(){
+    const v=parseFloat(state.acres);
+    document.querySelectorAll('#acres-presets button').forEach(btn=>{
+        const bv=parseFloat(btn.dataset.value);
+        if(bv===v){btn.className='px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-green-dark text-white border-green-dark';}
+        else{btn.className='px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white border-gray-200 text-charcoal hover:bg-gray-50';}
+    });
+}
+
+// ==================== SELECTIONS ====================
+function selectProject(key){
+    state.project=key;
+    document.querySelectorAll('#project-grid button').forEach(btn=>{
+        const sel=btn.dataset.key===key;
+        btn.className=`relative text-left p-4 rounded-xl border-2 transition-all ${sel?'border-green-dark bg-green-50 shadow-sm':'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'}`;
+        const check=btn.querySelector('.check-icon');
+        if(check)check.remove();
+        if(sel){const d=document.createElement('div');d.className='check-icon absolute top-3 right-3 w-5 h-5 bg-green-dark rounded-full flex items-center justify-center';d.innerHTML='<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';btn.appendChild(d);}
+    });
+    document.getElementById('step1-next').disabled=false;
+}
+
+function selectTerrain(key){
+    state.terrain=key;
+    document.querySelectorAll('#terrain-grid button').forEach(btn=>{
+        const sel=btn.dataset.key===key;
+        btn.className=`relative text-left p-4 rounded-xl border-2 transition-all ${sel?'border-green-dark bg-green-50 shadow-sm':'border-gray-200 bg-white hover:border-gray-300'}`;
+        const check=btn.querySelector('.check-icon');
+        if(check)check.remove();
+        if(sel){const d=document.createElement('div');d.className='check-icon absolute top-3 right-3 w-5 h-5 bg-green-dark rounded-full flex items-center justify-center';d.innerHTML='<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';btn.appendChild(d);}
+    });
+    document.getElementById('step3-next').disabled=false;
+}
+
+function toggleBudget(){
+    const checked=document.getElementById('no-budget-checkbox').checked;
+    state.hasBudget=!checked;
+    document.getElementById('budget-input-section').classList.toggle('hidden',checked);
+    if(checked)state.budget='';
+}
+
+// ==================== INPUTS ====================
+document.getElementById('acres-input').addEventListener('input',function(){
+    state.acres=this.value;
+    const v=parseFloat(this.value);
+    document.getElementById('step2-next').disabled=!(v>0);
+    document.getElementById('acres-warning').classList.toggle('hidden',!(v>500));
+    updateAcrePresets();
 });
 
-// When going to step 2, show project context
-function updateStep2Subtitle() {
-    const p = PROJECTS[state.project];
-    if (p) document.getElementById('step2-subtitle').textContent = `For your ${p.name.toLowerCase()} project`;
-}
-
-// Override goToStep to add hooks
-const _goToStep = goToStep;
-goToStep = function(n) {
-    if (n === 2) updateStep2Subtitle();
-    _goToStep(n);
-};
+document.getElementById('budget-input').addEventListener('input',function(){
+    const raw=this.value.replace(/[^0-9]/g,'');
+    state.budget=raw;
+    this.value=raw?parseInt(raw).toLocaleString():'';
+});
 
 // ==================== CALCULATIONS ====================
-function calculateEstimate() {
-    const project = PROJECTS[state.project];
-    const terrain = TERRAINS[state.terrain];
-    const acres = parseFloat(state.acres);
-    const baseLow = project.baseMin, baseHigh = project.baseMax;
-    const perAcreLow = project.perAcreMin * acres, perAcreHigh = project.perAcreMax * acres;
-    const m = terrain.multiplier;
-    const rawLow = baseLow + perAcreLow, rawHigh = baseHigh + perAcreHigh;
-    let confidence = "medium";
-    if (acres > 0 && acres <= 50) confidence = "high";
-    if (acres > 200) confidence = "low";
-    return {
-        low: Math.round(rawLow * m), high: Math.round(rawHigh * m),
-        baseLow, baseHigh,
-        perAcreLow: Math.round(perAcreLow), perAcreHigh: Math.round(perAcreHigh),
-        terrainAdjLow: Math.round(rawLow * (m - 1)), terrainAdjHigh: Math.round(rawHigh * (m - 1)),
-        terrainMultiplier: m, acres, confidence
-    };
+function calculateEstimate(){
+    const project=PROJECTS[state.project],terrain=TERRAINS[state.terrain],acres=parseFloat(state.acres);
+    const baseLow=project.baseMin,baseHigh=project.baseMax;
+    const perAcreLow=project.perAcreMin*acres,perAcreHigh=project.perAcreMax*acres;
+    const m=terrain.multiplier;
+    const rawLow=baseLow+perAcreLow,rawHigh=baseHigh+perAcreHigh;
+    let confidence="medium";if(acres>0&&acres<=50)confidence="high";if(acres>200)confidence="low";
+    return{low:Math.round(rawLow*m),high:Math.round(rawHigh*m),baseLow,baseHigh,perAcreLow:Math.round(perAcreLow),perAcreHigh:Math.round(perAcreHigh),terrainAdjLow:Math.round(rawLow*(m-1)),terrainAdjHigh:Math.round(rawHigh*(m-1)),terrainMultiplier:m,acres,confidence};
 }
-
-function analyzeBudget(budget, low, high) {
-    const mid = (low + high) / 2;
-    if (budget >= low) return { status: "good", message: budget >= mid ? "Your budget is well aligned with this project." : "Your budget covers the low end of the typical range.", canAfford: true, shortfall: 0, headroom: budget - low };
-    if (budget >= low * 0.8) return { status: "tight", message: "Your budget is close but tight. Consider a 15\u201320% contingency buffer.", canAfford: false, shortfall: low - budget, headroom: 0 };
-    return { status: "low", message: "Your budget is below the typical range for this project.", canAfford: false, shortfall: low - budget, headroom: 0 };
-}
-
-function getFeasibility(projectKey, budget, terrainKey) {
-    const project = PROJECTS[projectKey], terrain = TERRAINS[terrainKey];
-    const m = terrain.multiplier, baseCost = project.baseMin * m, perAcreCost = project.perAcreMin * m;
-    if (budget <= baseCost) return { feasibleAcres: 0, description: `At $${budget.toLocaleString()}, your budget doesn't cover the base setup costs for a ${project.name.toLowerCase()} on ${terrain.name.toLowerCase()} terrain.` };
-    const acres = Math.max(0.1, Math.round((budget - baseCost) / perAcreCost * 10) / 10);
-    return { feasibleAcres: acres, description: `With $${budget.toLocaleString()}, you could realistically develop about ${acres} acres of ${terrain.name.toLowerCase()} land for a ${project.name.toLowerCase()}.` };
-}
-
-function getCostDrivers() {
-    const project = PROJECTS[state.project], terrain = TERRAINS[state.terrain], acres = parseFloat(state.acres);
-    const drivers = [];
-    drivers.push({ label: `Project type: ${project.name}`, isBaseline: true, explanation: `${project.name} projects typically run $${project.baseMin.toLocaleString()}\u2013$${project.baseMax.toLocaleString()} in fixed costs plus $${project.perAcreMin.toLocaleString()}\u2013$${project.perAcreMax.toLocaleString()} per acre.` });
-    const sizeImpact = acres > 50 ? "high" : acres > 10 ? "moderate" : "low";
-    drivers.push({ label: `Site size: ${acres} acre${acres === 1 ? '' : 's'}`, isBaseline: false, explanation: `Larger sites scale per-acre costs. At ${acres} acre${acres === 1 ? '' : 's'}, per-acre work makes up most of the variable cost.` });
-    const pct = Math.round((terrain.multiplier - 1) * 100);
-    drivers.push({ label: terrain.name, isBaseline: terrain.multiplier === 1, percentage: pct, explanation: `${terrain.name} terrain ${terrain.multiplier === 1 ? 'is the baseline cost' : `adds about ${pct}% to the base development cost`} due to additional earthwork, equipment, or specialty work.` });
-    return drivers;
-}
+function analyzeBudget(budget,low,high){const mid=(low+high)/2;if(budget>=low)return{status:"good",message:budget>=mid?"Your budget is well aligned with this project.":"Your budget covers the low end of the typical range.",canAfford:true};if(budget>=low*0.8)return{status:"tight",message:"Your budget is close but tight. Consider a 15\u201320% contingency buffer.",canAfford:false,shortfall:low-budget};return{status:"low",message:"Your budget is below the typical range for this project.",canAfford:false,shortfall:low-budget};}
+function getFeasibility(){const project=PROJECTS[state.project],terrain=TERRAINS[state.terrain],budget=parseInt(state.budget);const m=terrain.multiplier,baseCost=project.baseMin*m,perAcreCost=project.perAcreMin*m;if(budget<=baseCost)return{feasibleAcres:0,description:`At $${budget.toLocaleString()}, your budget doesn\u2019t cover the base setup costs for a ${project.name.toLowerCase()} on ${terrain.name.toLowerCase()} terrain. Consider a smaller project type or a different site.`};const acres=Math.max(0.1,Math.round((budget-baseCost)/perAcreCost*10)/10);return{feasibleAcres:acres,description:`With $${budget.toLocaleString()}, you could realistically develop about ${acres} acres of ${terrain.name.toLowerCase()} land for a ${project.name.toLowerCase()}.`};}
+function getCostDrivers(){const project=PROJECTS[state.project],terrain=TERRAINS[state.terrain],acres=parseFloat(state.acres);const drivers=[];drivers.push({label:`Project type: ${project.name}`,impact:"neutral",isBaseline:true,explanation:`${project.name} projects typically run $${project.baseMin.toLocaleString()}\u2013$${project.baseMax.toLocaleString()} in fixed costs plus $${project.perAcreMin.toLocaleString()}\u2013$${project.perAcreMax.toLocaleString()} per acre.`});drivers.push({label:`Site size: ${acres} acre${acres===1?'':'s'}`,impact:acres>50?"high":acres>10?"moderate":"low",isBaseline:false,explanation:`Larger sites scale per-acre costs. At ${acres} acre${acres===1?'':'s'}, per-acre work makes up most of the variable cost.`});const pct=Math.round((terrain.multiplier-1)*100);drivers.push({label:terrain.name,impact:terrain.impact,isBaseline:terrain.multiplier===1,percentage:pct,explanation:`${terrain.name} terrain ${terrain.multiplier===1?'is the baseline cost':`adds about ${pct}% to the base development cost`} due to additional earthwork, equipment, or specialty work.`});return drivers;}
+function getTips(){const tips=[];if(TERRAIN_TIPS[state.terrain])tips.push(...TERRAIN_TIPS[state.terrain]);if(PROJECT_TIPS[state.project])tips.push(...PROJECT_TIPS[state.project]);tips.push(...GENERAL_TIPS);return tips.slice(0,5);}
+function fmtCurrency(v){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v);}
 
 // ==================== SHOW RESULTS ====================
-function skipBudget() {
-    state.hasBudget = false;
-    state.budget = '';
-    showResults();
-}
+function showResults(){
+    results=calculateEstimate();
+    const project=PROJECTS[state.project],terrain=TERRAINS[state.terrain],acres=parseFloat(state.acres);
+    const budgetVal=state.hasBudget?parseInt(state.budget):0;
+    const hasBudget=state.hasBudget&&budgetVal>0;
+    const budgetAnalysis=hasBudget?analyzeBudget(budgetVal,results.low,results.high):null;
+    const feasibility=(budgetAnalysis&&(budgetAnalysis.status==='tight'||budgetAnalysis.status==='low'))?getFeasibility():null;
+    const drivers=getCostDrivers();
+    const tips=getTips();
+    const se=`${acres} acre${acres===1?'':'s'}`;
+    const confColor=results.confidence==='high'?'bg-green-500':results.confidence==='medium'?'bg-yellow-500':'bg-red-500';
+    const confWidth=results.confidence==='high'?'w-full':results.confidence==='medium'?'w-2/3':'w-1/3';
 
-function showResults() {
-    results = calculateEstimate();
-    const project = PROJECTS[state.project], terrain = TERRAINS[state.terrain];
-    const acres = parseFloat(state.acres);
+    let html=`<p class="text-sm text-gray-mid text-center">${project.name}  \u00B7  ${se}  \u00B7  ${terrain.name}</p>`;
 
-    // Label
-    document.getElementById('results-label').textContent = `${project.icon} ${project.name}  \u00B7  ${acres} acre${acres === 1 ? '' : 's'}  \u00B7  ${terrain.name}`;
-
-    // Range
-    document.getElementById('estimate-low').textContent = fmtCurrency(results.low);
-    document.getElementById('estimate-high').textContent = fmtCurrency(results.high);
-
-    // Confidence
-    const badge = document.getElementById('confidence-badge');
-    badge.textContent = `${results.confidence} confidence`;
-    badge.className = 'confidence-badge confidence-' + results.confidence;
+    // Estimate range box
+    html+=`<div class="bg-[#FAF8F5] rounded-xl p-8 md:p-12 border border-gray-100">
+        <p class="text-sm text-gray-mid uppercase tracking-wide text-center mb-3">Estimated Cost Range</p>
+        <div class="text-center text-5xl md:text-6xl font-bold text-charcoal mb-3">${fmtCurrency(results.low)} \u2013 ${fmtCurrency(results.high)}</div>
+        <p class="text-sm text-gray-mid text-center mb-6">Planning range based on typical regional cost assumptions for this development type</p>
+        <div class="max-w-xs mx-auto">
+            <div class="flex justify-between text-xs text-gray-mid mb-1"><span>Estimate Confidence</span><span class="capitalize font-medium">${results.confidence}</span></div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full ${confColor} ${confWidth} rounded-full transition-all duration-1000"></div></div>
+        </div>
+    </div>`;
 
     // Budget analysis
-    const budgetEl = document.getElementById('budget-analysis');
-    const budgetVal = parseInt(state.budget, 10);
-    if (state.hasBudget && budgetVal > 0) {
-        const analysis = analyzeBudget(budgetVal, results.low, results.high);
-        const feasibility = getFeasibility(state.project, budgetVal, state.terrain);
-        budgetEl.classList.remove('hidden');
-        let html = `<div class="budget-result budget-${analysis.status}"><strong>Budget: ${fmtCurrency(budgetVal)}</strong> — ${analysis.message}</div>`;
-        if (!analysis.canAfford && feasibility) {
-            html += `<div class="card" style="margin-bottom:1.5rem"><div class="card-title">What your budget could realistically cover:</div><p style="font-size:0.9rem;color:var(--gray-600)">${feasibility.description}</p></div>`;
+    if(hasBudget&&budgetAnalysis){
+        const borderColor=budgetAnalysis.status==='good'?'border-l-green-dark':budgetAnalysis.status==='tight'?'border-l-yellow-500':'border-l-red-500';
+        const bgColor=budgetAnalysis.status==='good'?'bg-green-50':budgetAnalysis.status==='tight'?'bg-yellow-50':'bg-red-50';
+        html+=`<div class="rounded-xl p-6 border-l-4 ${bgColor} ${borderColor}">`;
+        if(budgetAnalysis.status==='good'){
+            html+=`<div class="flex items-start gap-3"><svg class="w-5 h-5 text-green-dark mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div><p class="text-charcoal font-medium">${budgetAnalysis.message}</p><p class="text-sm text-gray-600 mt-1">Consider setting aside an additional 15\u201320% as a contingency buffer for site surprises.</p></div></div>`;
+        } else {
+            html+=`<p class="text-charcoal font-medium mb-3">${budgetAnalysis.message}</p>`;
+            if(feasibility){html+=`<div class="mb-4"><p class="text-sm font-medium text-charcoal mb-1">What your budget could realistically cover:</p><p class="text-sm text-gray-600">${feasibility.description}</p></div>`;}
         }
-        budgetEl.innerHTML = html;
-    } else {
-        budgetEl.classList.add('hidden');
-        budgetEl.innerHTML = '';
+        html+=`</div>`;
     }
 
-    // Breakdown
-    const tbody = document.getElementById('breakdown-body');
-    tbody.innerHTML = '';
-    const rows = [
-        ['Base project cost (fixed)', fmtCurrency(results.baseLow), fmtCurrency(results.baseHigh)],
-        [`Per-acre cost (${acres} acre${acres===1?'':'s'})`, fmtCurrency(results.perAcreLow), fmtCurrency(results.perAcreHigh)]
-    ];
-    if (results.terrainAdjLow > 0) {
-        const pct = Math.round((results.terrainMultiplier - 1) * 100);
-        rows.push([`${terrain.name} adjustment (+${pct}%)`, '+' + fmtCurrency(results.terrainAdjLow), '+' + fmtCurrency(results.terrainAdjHigh)]);
-    }
-    rows.push(['__TOTAL__', fmtCurrency(results.low), fmtCurrency(results.high)]);
-    rows.forEach(row => {
-        const tr = document.createElement('tr');
-        if (row[0] === '__TOTAL__') { tr.className = 'total-row'; tr.innerHTML = `<td>Total Range</td><td>${row[1]}</td><td>${row[2]}</td>`; }
-        else tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td>`;
-        tbody.appendChild(tr);
-    });
+    // Cost breakdown table
+    html+=`<div class="bg-white rounded-xl p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-charcoal mb-4">Where the cost comes from</h2>
+        <div class="overflow-x-auto"><table class="w-full text-left">
+        <thead><tr class="border-b border-gray-200"><th class="py-3 text-sm font-semibold text-gray-500">Cost Factor</th><th class="py-3 text-sm font-semibold text-gray-500 text-right">Low</th><th class="py-3 text-sm font-semibold text-gray-500 text-right">High</th></tr></thead>
+        <tbody>
+        <tr class="border-b border-gray-100"><td class="py-3 text-charcoal">Base project cost (fixed)</td><td class="py-3 text-right text-gray-600">${fmtCurrency(results.baseLow)}</td><td class="py-3 text-right text-gray-600">${fmtCurrency(results.baseHigh)}</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 text-charcoal">Per-acre cost (${acres} ${acres===1?'acre':'acres'})</td><td class="py-3 text-right text-gray-600">${fmtCurrency(results.perAcreLow)}</td><td class="py-3 text-right text-gray-600">${fmtCurrency(results.perAcreHigh)}</td></tr>`;
+    if(results.terrainAdjLow>0){html+=`<tr class="border-b border-gray-100"><td class="py-3 text-charcoal">${terrain.name} adjustment (${Math.round((results.terrainMultiplier-1)*100)}%)</td><td class="py-3 text-right text-gray-600">+${fmtCurrency(results.terrainAdjLow)}</td><td class="py-3 text-right text-gray-600">+${fmtCurrency(results.terrainAdjHigh)}</td></tr>`;}
+    html+=`</tbody><tfoot><tr class="bg-[#FAF8F5]"><td class="py-3 px-2 font-bold text-charcoal">Total Range</td><td class="py-3 px-2 text-right font-bold text-green-dark text-lg">${fmtCurrency(results.low)}</td><td class="py-3 px-2 text-right font-bold text-green-dark text-lg">${fmtCurrency(results.high)}</td></tr></tfoot>
+        </table></div>
+        <p class="text-xs text-gray-mid mt-3">Based on internal planning assumptions. Not a contractor or engineering quote.</p>
+    </div>`;
 
-    // Cost Drivers
-    const driversList = document.getElementById('drivers-list');
-    driversList.innerHTML = '';
-    getCostDrivers().forEach(d => {
-        const li = document.createElement('li');
-        let pctStr = '';
-        if (d.percentage !== undefined && !d.isBaseline) pctStr = `<span class="driver-pct">(+${d.percentage}%)</span>`;
-        else if (d.isBaseline) pctStr = `<span class="driver-pct">(baseline)</span>`;
-        li.innerHTML = `<div class="driver-label">${d.label}${pctStr}</div><div class="driver-desc">${d.explanation}</div>`;
-        driversList.appendChild(li);
+    // Cost drivers
+    html+=`<div class="bg-white rounded-xl p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-charcoal mb-4">What\u2019s driving your estimate</h2>
+        <div class="space-y-2">`;
+    drivers.forEach((d,i)=>{
+        let dotColor='bg-green-500';if(d.impact==='high')dotColor='bg-red-500';else if(d.impact==='moderate')dotColor='bg-yellow-500';
+        let borderBg='bg-green-50 border-green-200';if(d.impact==='high')borderBg='bg-red-50 border-red-200';else if(d.impact==='moderate')borderBg='bg-yellow-50 border-yellow-200';
+        let pctStr='';if(d.percentage!==undefined&&!d.isBaseline)pctStr=`<span class="text-sm text-gray-mid">+${d.percentage}%</span>`;else if(d.isBaseline)pctStr=`<span class="text-sm text-gray-mid">baseline</span>`;
+        html+=`<div class="rounded-lg border ${borderBg} overflow-hidden" onclick="this.classList.toggle('driver-expanded')">
+            <button class="w-full px-4 py-3 flex items-center justify-between gap-3 text-left">
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span><span class="font-semibold text-charcoal text-sm">${d.label}</span>${pctStr}</div>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="driver-explanation px-4 pb-3"><p class="text-sm text-gray-600 leading-relaxed">${d.explanation}</p></div>
+        </div>`;
     });
+    html+=`</div></div>`;
 
     // Tips
-    const tipsList = document.getElementById('tips-list');
-    tipsList.innerHTML = '';
-    getTips().forEach(tip => { const li = document.createElement('li'); li.textContent = tip; tipsList.appendChild(li); });
+    html+=`<div class="bg-white rounded-xl p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-charcoal mb-4">Things to keep in mind</h2>
+        <ul class="space-y-3">${tips.map(t=>`<li class="flex gap-3 text-gray-700 leading-relaxed text-sm"><span class="text-green-dark mt-0.5 shrink-0">\u2022</span><span>${t}</span></li>`).join('')}</ul>
+    </div>`;
 
+    // What to do next
+    html+=`<div class="bg-white rounded-xl p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-charcoal mb-3">What to do next</h2>
+        <p class="text-gray-mid text-sm mb-6">Use this range as your starting point. The more contractor and engineering quotes you get, the tighter your real budget will become.</p>
+        <div class="space-y-4 mb-8">
+            <div class="flex items-start gap-3"><svg class="w-5 h-5 text-green-dark mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="text-charcoal text-sm">Save or download this estimate as a PDF</span></div>
+            <div class="flex items-start gap-3"><svg class="w-5 h-5 text-green-dark mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span class="text-charcoal text-sm">Get 2\u20133 quotes from licensed local contractors and engineers</span></div>
+            <div class="flex items-start gap-3"><svg class="w-5 h-5 text-green-dark mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><button onclick="resetCalculator()" class="text-charcoal text-sm hover:text-green-dark transition-colors text-left">Adjust your scope and re-run if needed</button></div>
+        </div>
+        <button onclick="downloadPDF()" id="pdf-btn" class="w-full md:w-auto px-8 py-4 rounded-lg font-medium text-lg text-white bg-green-dark hover:bg-green-mid transition-colors disabled:opacity-60 disabled:cursor-not-allowed">Download PDF Summary</button>
+    </div>`;
+
+    // Disclaimer
+    html+=`<div class="bg-white rounded-xl p-6 border border-gray-100">
+        <p class="text-xs text-gray-mid leading-relaxed">This estimate is generated from internal planning assumptions and regional cost averages. It is not a contractor quote, official appraisal, or guarantee of actual project cost. Costs vary significantly based on local market conditions, site-specific factors, and contractor pricing. Always consult licensed contractors and engineers before making financial decisions.</p>
+    </div>`;
+
+    // Start over
+    html+=`<div class="text-center"><button onclick="resetCalculator()" class="px-8 py-3 rounded-lg font-medium text-charcoal bg-white border border-gray-200 hover:bg-gray-50 transition-colors">Start Over</button></div>`;
+
+    document.getElementById('results-container').innerHTML=html;
     goToStep(5);
 }
 
-function getTips() {
-    const tips = [];
-    if (TERRAIN_TIPS[state.terrain]) tips.push(...TERRAIN_TIPS[state.terrain]);
-    if (PROJECT_TIPS[state.project]) tips.push(...PROJECT_TIPS[state.project]);
-    tips.push(...GENERAL_TIPS);
-    return tips.slice(0, 5);
-}
-
-function fmtCurrency(v) { return '$' + v.toLocaleString(); }
-
-// ==================== PDF DOWNLOAD ====================
-function downloadPDF() {
-    const btn = document.getElementById('pdf-btn');
-    const btnText = document.getElementById('pdf-btn-text');
-    btn.disabled = true;
-    btnText.textContent = 'Preparing PDF\u2026';
-
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
-        const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
-        const margin = 48, contentW = W - margin * 2;
-        const black = [38,38,38], gray = [110,110,110], lightGray = [180,180,180], green = [61,90,60], bgColor = [250,248,245], lineColor = [228,228,228];
-
-        let y = margin;
-        const project = PROJECTS[state.project], terrain = TERRAINS[state.terrain];
-        const acres = parseFloat(state.acres);
-
-        const checkPage = (needed) => { if (y + needed > H - margin) { doc.addPage(); y = margin; } };
-        const addText = (text, opts = {}) => {
-            const { size = 11, color = black, style = 'normal', align = 'left', x = margin, width = contentW, lineHeight = 1.35 } = opts;
-            if (!text) return;
-            doc.setFont('helvetica', style);
-            doc.setFontSize(size);
-            doc.setTextColor(color[0], color[1], color[2]);
-            const lines = doc.splitTextToSize(String(text), width);
-            const lh = size * lineHeight;
-            for (const line of lines) {
-                checkPage(lh);
-                const xPos = align === 'center' ? W / 2 : align === 'right' ? W - margin : x;
-                doc.text(line, xPos, y + size, { align });
-                y += lh;
-            }
-        };
-        const addLine = (before = 8, after = 12) => {
-            y += before;
-            checkPage(1 + after);
-            doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-            doc.setLineWidth(0.5);
-            doc.line(margin, y, W - margin, y);
-            y += after;
-        };
+// ==================== PDF ====================
+function downloadPDF(){
+    const btn=document.getElementById('pdf-btn');
+    btn.disabled=true;btn.textContent='Preparing PDF\u2026';
+    try{
+        const{jsPDF}=window.jspdf;
+        const doc=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
+        const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+        const margin=48,contentW=W-margin*2;
+        const black=[38,38,38],gray=[110,110,110],lightGray=[180,180,180],green=[61,90,60],bgColor=[250,248,245],lineColor=[228,228,228];
+        let y=margin;
+        const project=PROJECTS[state.project],terrain=TERRAINS[state.terrain],acres=parseFloat(state.acres);
+        const checkPage=(needed)=>{if(y+needed>H-margin){doc.addPage();y=margin;}};
+        const addText=(text,opts={})=>{const{size=11,color=black,style='normal',align='left',x=margin,width=contentW,lineHeight=1.35}=opts;if(!text)return;doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(color[0],color[1],color[2]);const lines=doc.splitTextToSize(String(text),width);const lh=size*lineHeight;for(const line of lines){checkPage(lh);const xPos=align==='center'?W/2:align==='right'?W-margin:x;doc.text(line,xPos,y+size,{align});y+=lh;}};
+        const addLine=(before=8,after=12)=>{y+=before;checkPage(1+after);doc.setDrawColor(lineColor[0],lineColor[1],lineColor[2]);doc.setLineWidth(0.5);doc.line(margin,y,W-margin,y);y+=after;};
 
         // Header
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(green[0], green[1], green[2]);
-        doc.text('plotcost', margin, y + 18);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(gray[0], gray[1], gray[2]);
-        const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        doc.text(dateStr, W - margin, y + 18, { align: 'right' });
-        y += 30;
-        addLine(0, 18);
+        doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(green[0],green[1],green[2]);
+        doc.text('plotcost',margin,y+18);
+        doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(gray[0],gray[1],gray[2]);
+        const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+        doc.text(dateStr,W-margin,y+18,{align:'right'});y+=30;
+        addLine(0,18);
 
-        // Title
-        addText('Land Development Cost Estimate', { size: 18, style: 'bold' });
-        y += 6;
-        addText(`${project.name}  \u00B7  ${acres} acre${acres===1?'':'s'}  \u00B7  ${terrain.name}`, { size: 11, color: gray });
-        y += 14;
+        addText('Land Development Cost Estimate',{size:18,style:'bold'});y+=6;
+        addText(`${project.name}  \u00B7  ${acres} acre${acres===1?'':'s'}  \u00B7  ${terrain.name}`,{size:11,color:gray});y+=14;
 
         // Estimate box
-        const boxH = 90;
-        checkPage(boxH + 8);
-        doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-        doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'F');
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(gray[0], gray[1], gray[2]);
-        doc.text('ESTIMATED COST RANGE', W / 2, y + 22, { align: 'center' });
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(28); doc.setTextColor(black[0], black[1], black[2]);
-        doc.text(`${fmtCurrency(results.low)}  \u2013  ${fmtCurrency(results.high)}`, W / 2, y + 56, { align: 'center' });
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(gray[0], gray[1], gray[2]);
-        doc.text(`Confidence: ${results.confidence}`, W / 2, y + 78, { align: 'center' });
-        y += boxH + 18;
+        const boxH=90;checkPage(boxH+8);
+        doc.setFillColor(bgColor[0],bgColor[1],bgColor[2]);doc.roundedRect(margin,y,contentW,boxH,6,6,'F');
+        doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(gray[0],gray[1],gray[2]);
+        doc.text('ESTIMATED COST RANGE',W/2,y+22,{align:'center'});
+        doc.setFont('helvetica','bold');doc.setFontSize(28);doc.setTextColor(black[0],black[1],black[2]);
+        doc.text(`${fmtCurrency(results.low)}  \u2013  ${fmtCurrency(results.high)}`,W/2,y+56,{align:'center'});
+        doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(gray[0],gray[1],gray[2]);
+        doc.text(`Confidence: ${results.confidence}`,W/2,y+78,{align:'center'});y+=boxH+18;
 
         // Budget
-        const budgetVal = parseInt(state.budget, 10);
-        if (state.hasBudget && budgetVal > 0) {
-            const analysis = analyzeBudget(budgetVal, results.low, results.high);
-            const feasibility = getFeasibility(state.project, budgetVal, state.terrain);
-            addText('Budget Analysis', { size: 13, style: 'bold' });
-            y += 4;
-            addText(`Your budget: ${fmtCurrency(budgetVal)}`, { size: 10, color: gray });
-            y += 4;
-            addText(analysis.message, { size: 10 });
-            if (feasibility && feasibility.description) { y += 4; addText(`What your budget could realistically cover: ${feasibility.description}`, { size: 10, color: gray }); }
-            y += 12;
-        }
+        const budgetVal=state.hasBudget?parseInt(state.budget):0;
+        if(state.hasBudget&&budgetVal>0){const analysis=analyzeBudget(budgetVal,results.low,results.high);addText('Budget Analysis',{size:13,style:'bold'});y+=4;addText(`Your budget: ${fmtCurrency(budgetVal)}`,{size:10,color:gray});y+=4;addText(analysis.message,{size:10});if(!analysis.canAfford){const f=getFeasibility();if(f&&f.description){y+=4;addText(`What your budget could realistically cover: ${f.description}`,{size:10,color:gray});}}y+=12;}
 
-        // Breakdown table
-        addText('Where the cost comes from', { size: 13, style: 'bold' });
-        y += 6;
-        const cols = [margin, margin + contentW * 0.55, margin + contentW * 0.78];
-        const colW = [contentW * 0.55, contentW * 0.23, contentW * 0.22];
-
-        // Table header
-        checkPage(22);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(gray[0], gray[1], gray[2]);
-        doc.text('COST FACTOR', cols[0], y + 10);
-        doc.text('LOW', cols[1] + colW[1], y + 10, { align: 'right' });
-        doc.text('HIGH', cols[2] + colW[2], y + 10, { align: 'right' });
-        y += 14;
-        doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 6;
-
-        const addRow = (label, low, high, opts = {}) => {
-            const { bold = false, color: c = black } = opts;
-            checkPage(22);
-            doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(10); doc.setTextColor(c[0], c[1], c[2]);
-            const lines = doc.splitTextToSize(label, colW[0] - 6);
-            for (let i = 0; i < lines.length; i++) doc.text(lines[i], cols[0], y + 10 + i * 12);
-            doc.text(low, cols[1] + colW[1], y + 10, { align: 'right' });
-            doc.text(high, cols[2] + colW[2], y + 10, { align: 'right' });
-            const rowH = Math.max(20, lines.length * 12 + 8);
-            y += rowH;
-            doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]); doc.setLineWidth(0.3); doc.line(margin, y, W - margin, y); y += 4;
-        };
-
-        addRow('Base project cost (fixed)', fmtCurrency(results.baseLow), fmtCurrency(results.baseHigh));
-        addRow(`Per-acre cost (${acres} ${acres===1?'acre':'acres'})`, fmtCurrency(results.perAcreLow), fmtCurrency(results.perAcreHigh));
-        if (results.terrainAdjLow > 0) addRow(`${terrain.name} adjustment (+${Math.round((results.terrainMultiplier-1)*100)}%)`, `+${fmtCurrency(results.terrainAdjLow)}`, `+${fmtCurrency(results.terrainAdjHigh)}`);
-        addRow('Total Range', fmtCurrency(results.low), fmtCurrency(results.high), { bold: true, color: green });
-        y += 12;
+        // Table
+        addText('Where the cost comes from',{size:13,style:'bold'});y+=6;
+        const cols=[margin,margin+contentW*0.55,margin+contentW*0.78],colW=[contentW*0.55,contentW*0.23,contentW*0.22];
+        checkPage(22);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(gray[0],gray[1],gray[2]);
+        doc.text('COST FACTOR',cols[0],y+10);doc.text('LOW',cols[1]+colW[1],y+10,{align:'right'});doc.text('HIGH',cols[2]+colW[2],y+10,{align:'right'});
+        y+=14;doc.setDrawColor(lineColor[0],lineColor[1],lineColor[2]);doc.setLineWidth(0.5);doc.line(margin,y,W-margin,y);y+=6;
+        const addRow=(label,low,high,opts={})=>{const{bold=false,color:c=black}=opts;checkPage(22);doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(10);doc.setTextColor(c[0],c[1],c[2]);const lines=doc.splitTextToSize(label,colW[0]-6);for(let i=0;i<lines.length;i++)doc.text(lines[i],cols[0],y+10+i*12);doc.text(low,cols[1]+colW[1],y+10,{align:'right'});doc.text(high,cols[2]+colW[2],y+10,{align:'right'});y+=Math.max(20,lines.length*12+8);doc.setDrawColor(lineColor[0],lineColor[1],lineColor[2]);doc.setLineWidth(0.3);doc.line(margin,y,W-margin,y);y+=4;};
+        addRow('Base project cost (fixed)',fmtCurrency(results.baseLow),fmtCurrency(results.baseHigh));
+        addRow(`Per-acre cost (${acres} ${acres===1?'acre':'acres'})`,fmtCurrency(results.perAcreLow),fmtCurrency(results.perAcreHigh));
+        if(results.terrainAdjLow>0)addRow(`${terrain.name} adjustment (${Math.round((results.terrainMultiplier-1)*100)}%)`,`+${fmtCurrency(results.terrainAdjLow)}`,`+${fmtCurrency(results.terrainAdjHigh)}`);
+        addRow('Total Range',fmtCurrency(results.low),fmtCurrency(results.high),{bold:true,color:green});y+=12;
 
         // Drivers
-        const drivers = getCostDrivers();
-        if (drivers.length > 0) {
-            addText("What's driving your estimate", { size: 13, style: 'bold' });
-            y += 6;
-            for (const d of drivers) {
-                let pctStr = '';
-                if (d.percentage !== undefined && !d.isBaseline) pctStr = `  (+${d.percentage}%)`;
-                else if (d.isBaseline) pctStr = '  (baseline)';
-                addText(`\u2022 ${d.label}${pctStr}`, { size: 11, style: 'bold' });
-                if (d.explanation) addText(d.explanation, { size: 10, color: gray, x: margin + 14, width: contentW - 14 });
-                y += 4;
-            }
-            y += 8;
-        }
+        const drivers=getCostDrivers();
+        addText("What\u2019s driving your estimate",{size:13,style:'bold'});y+=6;
+        for(const d of drivers){let p='';if(d.percentage!==undefined&&!d.isBaseline)p=`  (+${d.percentage}%)`;else if(d.isBaseline)p='  (baseline)';addText(`\u2022 ${d.label}${p}`,{size:11,style:'bold'});if(d.explanation)addText(d.explanation,{size:10,color:gray,x:margin+14,width:contentW-14});y+=4;}y+=8;
 
         // Tips
-        const tips = getTips();
-        if (tips.length > 0) {
-            addText('Things to keep in mind', { size: 13, style: 'bold' });
-            y += 6;
-            for (const tip of tips) { addText(`\u2022 ${tip}`, { size: 10 }); y += 2; }
-            y += 8;
-        }
+        const tips=getTips();
+        addText('Things to keep in mind',{size:13,style:'bold'});y+=6;
+        for(const tip of tips){addText(`\u2022 ${tip}`,{size:10});y+=2;}y+=8;
 
         // Disclaimer
-        addLine(8, 12, lightGray);
-        addText('This estimate is generated from internal planning assumptions and regional cost averages. It is not a contractor quote, official appraisal, or guarantee of actual project cost. Costs vary significantly based on local market conditions, site-specific factors, and contractor pricing. Always consult licensed contractors and engineers before making financial decisions.', { size: 8, color: gray, lineHeight: 1.45 });
+        addLine(8,12);
+        addText('This estimate is generated from internal planning assumptions and regional cost averages. It is not a contractor quote, official appraisal, or guarantee of actual project cost. Costs vary significantly based on local market conditions, site-specific factors, and contractor pricing. Always consult licensed contractors and engineers before making financial decisions.',{size:8,color:gray,lineHeight:1.45});
 
-        // Save
-        const filename = `plotcost-${(project.name || 'estimate').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'estimate'}.pdf`;
+        const filename=`plotcost-${(project.name||'estimate').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'estimate'}.pdf`;
         doc.save(filename);
-    } catch (e) {
-        console.error('Failed to generate PDF', e);
-        alert('Could not generate the PDF. Please try again.');
-    } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Download PDF Summary';
-    }
+    }catch(e){console.error('Failed to generate PDF',e);alert('Could not generate the PDF. Please try again.');}
+    finally{btn.disabled=false;btn.textContent='Download PDF Summary';}
 }
 
 // ==================== RESET ====================
-function resetCalculator() {
-    state = { step: 1, project: null, acres: '', terrain: null, budget: '', hasBudget: true };
-    results = null;
-    document.getElementById('acres-input').value = '';
-    document.getElementById('budget-input').value = '';
-    document.querySelectorAll('.grid-select-item').forEach(el => el.classList.remove('selected'));
-    document.getElementById('step1-next').disabled = true;
-    document.getElementById('step2-next').disabled = true;
-    document.getElementById('step3-next').disabled = true;
+function resetCalculator(){
+    state={step:1,project:null,acres:'',terrain:null,budget:'',hasBudget:true};results=null;
+    document.getElementById('acres-input').value='';
+    document.getElementById('budget-input').value='';
+    document.getElementById('no-budget-checkbox').checked=false;
+    document.getElementById('budget-input-section').classList.remove('hidden');
+    document.querySelectorAll('#project-grid button').forEach(b=>{b.className='relative text-left p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm';const c=b.querySelector('.check-icon');if(c)c.remove();});
+    document.querySelectorAll('#terrain-grid button').forEach(b=>{b.className='relative text-left p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:border-gray-300';const c=b.querySelector('.check-icon');if(c)c.remove();});
+    document.getElementById('step1-next').disabled=true;
+    document.getElementById('step2-next').disabled=true;
+    document.getElementById('step3-next').disabled=true;
+    document.getElementById('acres-warning').classList.add('hidden');
+    updateAcrePresets();
     goToStep(1);
 }
+
+// ==================== NAV SCROLL ====================
+window.addEventListener('scroll',()=>{
+    const nav=document.getElementById('main-nav');
+    if(!nav)return;
+    if(window.scrollY>20){nav.className='fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/95 backdrop-blur-sm shadow-sm py-3';}
+    else{nav.className='fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-transparent py-5';}
+});
 
 // ==================== INIT ====================
 renderProjectGrid();
 renderTerrainGrid();
-updateProgress();
+renderAcrePresets();
+renderBudgetPresets();
+renderStepper();
 </script>
 </body>
 </html>
